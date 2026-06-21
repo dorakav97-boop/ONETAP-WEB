@@ -1,4 +1,3 @@
-
 // Simple one-tap canvas game (Flappy-like)
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
