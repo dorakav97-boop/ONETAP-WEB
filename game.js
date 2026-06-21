@@ -1,3 +1,4 @@
+// --- הגדרות Firebase ---
 const firebaseConfig = {
   apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
   authDomain: "dor-akav-game.firebaseapp.com",
@@ -11,6 +12,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// --- משתני משחק ---
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let W, H;
@@ -25,6 +27,7 @@ const retryBtn = document.getElementById('retry');
 const playerNameInput = document.getElementById('playerName');
 const scoresList = document.getElementById('scoresList');
 
+// --- שימוש בשמות הקבצים המיוחדים שלך ---
 const playerImg = new Image();
 playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
@@ -39,22 +42,24 @@ let pipes = [];
 let spawnTimer = 0;
 let score = 0;
 let running = false;
-let currentSpeed = 2.5;
+let currentSpeed = 3;
 
+// --- טעינת טבלת שיאים ---
 async function loadLeaderboard() {
     try {
         const snapshot = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<p>${data.name}: ${data.score}</p>`;
+            html += `<p style="margin:5px 0;">${data.name}: ${data.score}</p>`;
         });
         scoresList.innerHTML = html || 'No scores yet!';
-    } catch (e) { console.log(e); }
+    } catch (e) { console.log("Error loading leaderboard:", e); }
 }
 
+// --- שמירת שיא ---
 async function saveScore(name, finalScore) {
-    if (!name) name = "Anonymous";
+    if (!name || name.trim() === "") name = "Anonymous";
     if (finalScore === 0) return;
     try {
         await db.collection('scores').add({
@@ -63,23 +68,37 @@ async function saveScore(name, finalScore) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         loadLeaderboard();
-    } catch (e) { console.log(e); }
+    } catch (e) { console.log("Error saving score:", e); }
 }
 
-function tap() {
-    if (running) {
+// --- פונקציית הלחיצה המעודכנת (מונעת התחלה כשמקלידים) ---
+function tap(e) {
+    // אם לוחצים על תיבת הטקסט - אל תעשה כלום (תן להקליד)
+    if (e.target.id === 'playerName') return;
+
+    if (!running) {
+        // אם המשחק לא רץ - רק לחיצה על כפתור ה-Start תתחיל אותו
+        if (e.target.id === 'retry') {
+            start();
+        }
+    } else {
+        // אם המשחק רץ - קפוץ
         player.vy = jump;
         jumpSound.currentTime = 0;
         jumpSound.play().catch(e => {});
     }
 }
 
-retryBtn.onclick = () => {
-    if (!running) start();
-};
+// --- מאזיני לחיצה ---
+window.addEventListener('touchstart', (e) => { 
+    if (e.target.id === 'playerName') return; 
+    if(running) e.preventDefault(); 
+    tap(e); 
+}, { passive: false });
 
-window.addEventListener('touchstart', (e) => { if(running) { e.preventDefault(); tap(); } }, { passive: false });
-window.addEventListener('mousedown', (e) => { if(running) tap(); });
+window.addEventListener('mousedown', (e) => {
+    tap(e);
+});
 
 function start() {
     running = true;
@@ -121,9 +140,14 @@ function loop() {
         if (p.x < -70) pipes.splice(i, 1);
     }
     if (player.y > H || player.y < 0) gameOver();
+    
+    // ציור התמונה שלך
     if (playerImg.complete) {
         ctx.save(); ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.clip();
         ctx.drawImage(playerImg, player.x - player.r, player.y - player.r, player.r * 2, player.r * 2); ctx.restore();
+    } else {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
     }
     requestAnimationFrame(loop);
 }
@@ -135,4 +159,5 @@ function gameOver() {
     saveScore(playerNameInput.value, score);
 }
 
+// טעינת הטבלה בהתחלה
 loadLeaderboard();
