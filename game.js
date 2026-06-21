@@ -1,3 +1,4 @@
+// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
   authDomain: "dor-akav-game.firebaseapp.com",
@@ -10,6 +11,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// --- אלמנטים של המשחק ---
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let W, H;
@@ -21,6 +23,7 @@ const scoreEl = document.getElementById('score'), highEl = document.getElementBy
       retryBtn = document.getElementById('retry'), playerNameInput = document.getElementById('playerName'), 
       scoresList = document.getElementById('scoresList'), shieldStatus = document.getElementById('shieldStatus'), shareBtn = document.getElementById('shareBtn');
 
+// --- נכסים (תמונה וצליל שלך) ---
 const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
 
@@ -30,6 +33,7 @@ highEl.textContent = 'High: ' + high;
 let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false };
 let gravity = 0.4, jump = -7, pipes = [], items = [], score = 0, running = false, currentSpeed = 3, spawnTimer = 0, lastTime = 0;
 
+// מניעת בעיות הקלדה
 playerNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
 playerNameInput.addEventListener('touchstart', (e) => e.stopPropagation());
 
@@ -66,10 +70,10 @@ function start() {
 function spawnObject() {
     let gap = Math.max(150, 260 - (score * 2));
     let center = Math.random() * (H - gap - 100) + 50 + gap/2;
-    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${score * 10 % 360}, 70%, 50%)` });
+    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${score * 15 % 360}, 70%, 50%)` });
     
-    // סיכוי להופעת מטבע או מגן
-    if (Math.random() > 0.7) {
+    // סיכוי להופעת מטבע (צהוב) או מגן (כחול)
+    if (Math.random() > 0.75) {
         items.push({ x: W + 150, y: center, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
     }
 }
@@ -79,18 +83,19 @@ function loop(timestamp) {
     let dt = timestamp - lastTime;
     lastTime = timestamp;
 
-    
-    // רקע דינמי שמשתנה מכחול לסגול-שחור
-    let lightness = Math.max(5, 50 - (score * 0.5)); // הופך כהה יותר
-    let colorHue = 210 + (score * 0.5); // משנה גוון מכחול לסגול
-    ctx.fillStyle = `hsl(${colorHue}, 50%, ${lightness}%)`;
+    // --- רקע דינמי שמשתנה מיום ללילה ---
+    let lightness = Math.max(5, 50 - (score * 0.8)); // מתחיל ב-50% (כחול) ויורד עד 5% (שחור)
+    let colorHue = 210 + (score * 0.3); // משתנה מעט לכיוון סגול
+    ctx.fillStyle = `hsl(${colorHue}, 60%, ${lightness}%)`;
     ctx.fillRect(0, 0, W, H);
 
-    // הוספת "כוכבים" קטנים אם זה לילה (ניקוד גבוה מ-20)
-    if (score > 20) {
+    // הוספת כוכבים אם הניקוד מעל 15 (לילה)
+    if (score > 15) {
         ctx.fillStyle = "white";
-        for(let i=0; i<10; i++) {
-            ctx.fillRect((Math.sin(i*500)*W), (Math.cos(i*1000)*H), 2, 2);
+        for(let i=0; i<15; i++) {
+            let x = (Math.abs(Math.sin(i)) * W);
+            let y = (Math.abs(Math.cos(i)) * H);
+            ctx.fillRect(x, y, 2, 2);
         }
     }
 
@@ -100,15 +105,19 @@ function loop(timestamp) {
 
     player.vy += gravity;
     player.y += player.vy;
+    // סיבוב הדמות לפי כיוון התנועה
     player.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, player.vy * 0.1));
 
+    // ציור וטיפול במכשולים
     for (let i = pipes.length - 1; i >= 0; i--) {
         let p = pipes[i]; p.x -= currentSpeed;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, 0, 60, p.topH);
         ctx.fillRect(p.x, p.botY, 60, H - p.botY);
 
-        if (!p.passed && p.x < player.x) { p.passed = true; score++; scoreEl.textContent = "Score: " + score; }
+        if (!p.passed && p.x < player.x) { 
+            p.passed = true; score++; scoreEl.textContent = "Score: " + score; 
+        }
         
         if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
             if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
@@ -119,6 +128,7 @@ function loop(timestamp) {
         if (p.x < -100) pipes.splice(i, 1);
     }
 
+    // ציור וטיפול בפריטים (מטבעות ומגן)
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.x -= currentSpeed;
         ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
@@ -134,11 +144,13 @@ function loop(timestamp) {
 
     if (player.y > H || player.y < 0) gameOver();
 
+    // ציור השחקן עם סיבוב
     ctx.save();
     ctx.translate(player.x, player.y);
     ctx.rotate(player.angle);
     ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2); ctx.clip();
     if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r * 2, player.r * 2);
+    else { ctx.fillStyle = '#f59e0b'; ctx.fill(); }
     if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5; ctx.stroke(); }
     ctx.restore();
 
@@ -160,7 +172,19 @@ function gameOver() {
     };
 }
 
-window.addEventListener('mousedown', (e) => { if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; if(!running) return; player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); });
-window.addEventListener('touchstart', (e) => { if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; if(running) e.preventDefault(); player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }, { passive: false });
+// שליטה בלחיצות
+window.addEventListener('mousedown', (e) => { 
+    if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; 
+    if(!running) return; 
+    player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); 
+});
+
+window.addEventListener('touchstart', (e) => { 
+    if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; 
+    if(running) e.preventDefault(); 
+    player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); 
+}, { passive: false });
+
 retryBtn.onclick = () => { if (!running) start(); };
+
 loadLeaderboard();
