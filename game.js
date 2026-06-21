@@ -1,4 +1,3 @@
-// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
   authDomain: "dor-akav-game.firebaseapp.com",
@@ -11,7 +10,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// --- אלמנטים של המשחק ---
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let W, H;
@@ -23,7 +21,6 @@ const scoreEl = document.getElementById('score'), highEl = document.getElementBy
       retryBtn = document.getElementById('retry'), playerNameInput = document.getElementById('playerName'), 
       scoresList = document.getElementById('scoresList'), shieldStatus = document.getElementById('shieldStatus'), shareBtn = document.getElementById('shareBtn');
 
-// --- נכסים (תמונה וצליל שלך) ---
 const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
 
@@ -33,7 +30,6 @@ highEl.textContent = 'High: ' + high;
 let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false };
 let gravity = 0.4, jump = -7, pipes = [], items = [], score = 0, running = false, currentSpeed = 3, spawnTimer = 0, lastTime = 0;
 
-// מניעת בעיות הקלדה
 playerNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
 playerNameInput.addEventListener('touchstart', (e) => e.stopPropagation());
 
@@ -44,7 +40,7 @@ async function loadLeaderboard() {
         let i = 0;
         snap.forEach(doc => {
             let d = doc.data();
-            html += `<p>${medals[i] || '🏅'} ${d.name}: ${d.score}</p>`;
+            html += `<p style="margin:5px 0;">${medals[i] || '🏅'} ${d.name}: ${d.score}</p>`;
             i++;
         });
         scoresList.innerHTML = html || 'No scores yet!';
@@ -68,13 +64,11 @@ function start() {
 }
 
 function spawnObject() {
-    let gap = Math.max(150, 260 - (score * 2));
+    let gap = Math.max(160, 260 - (score * 2));
     let center = Math.random() * (H - gap - 100) + 50 + gap/2;
-    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${score * 15 % 360}, 70%, 50%)` });
-    
-    // סיכוי להופעת מטבע (צהוב) או מגן (כחול)
-    if (Math.random() > 0.75) {
-        items.push({ x: W + 150, y: center, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
+    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${score * 20 % 360}, 70%, 50%)` });
+    if (Math.random() > 0.8) {
+        items.push({ x: W + 100, y: center, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
     }
 }
 
@@ -83,19 +77,16 @@ function loop(timestamp) {
     let dt = timestamp - lastTime;
     lastTime = timestamp;
 
-    // --- רקע דינמי שמשתנה מיום ללילה ---
-    let lightness = Math.max(5, 50 - (score * 0.8)); // מתחיל ב-50% (כחול) ויורד עד 5% (שחור)
-    let colorHue = 210 + (score * 0.3); // משתנה מעט לכיוון סגול
-    ctx.fillStyle = `hsl(${colorHue}, 60%, ${lightness}%)`;
+    // רקע כהה (בטוח לא לבן)
+    let lightness = Math.max(5, 25 - (score * 0.5)); 
+    ctx.fillStyle = `hsl(220, 60%, ${lightness}%)`;
     ctx.fillRect(0, 0, W, H);
 
-    // הוספת כוכבים אם הניקוד מעל 15 (לילה)
-    if (score > 15) {
+    // כוכבים
+    if (score > 10) {
         ctx.fillStyle = "white";
         for(let i=0; i<15; i++) {
-            let x = (Math.abs(Math.sin(i)) * W);
-            let y = (Math.abs(Math.cos(i)) * H);
-            ctx.fillRect(x, y, 2, 2);
+            ctx.fillRect((Math.abs(Math.sin(i*234))*W), (Math.abs(Math.cos(i*567))*H), 2, 2);
         }
     }
 
@@ -105,19 +96,15 @@ function loop(timestamp) {
 
     player.vy += gravity;
     player.y += player.vy;
-    // סיבוב הדמות לפי כיוון התנועה
     player.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, player.vy * 0.1));
 
-    // ציור וטיפול במכשולים
     for (let i = pipes.length - 1; i >= 0; i--) {
         let p = pipes[i]; p.x -= currentSpeed;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, 0, 60, p.topH);
         ctx.fillRect(p.x, p.botY, 60, H - p.botY);
 
-        if (!p.passed && p.x < player.x) { 
-            p.passed = true; score++; scoreEl.textContent = "Score: " + score; 
-        }
+        if (!p.passed && p.x < player.x) { p.passed = true; score++; scoreEl.textContent = "Score: " + score; }
         
         if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
             if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
@@ -128,12 +115,10 @@ function loop(timestamp) {
         if (p.x < -100) pipes.splice(i, 1);
     }
 
-    // ציור וטיפול בפריטים (מטבעות ומגן)
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i]; it.x -= currentSpeed;
         ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
         ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
-        
         let dx = player.x - it.x, dy = player.y - it.y;
         if (Math.sqrt(dx*dx + dy*dy) < player.r + it.r) {
             if (it.type === 'shield') { player.hasShield = true; shieldStatus.textContent = "🛡️ SHIELD ACTIVE"; }
@@ -144,7 +129,6 @@ function loop(timestamp) {
 
     if (player.y > H || player.y < 0) gameOver();
 
-    // ציור השחקן עם סיבוב
     ctx.save();
     ctx.translate(player.x, player.y);
     ctx.rotate(player.angle);
@@ -162,17 +146,16 @@ function gameOver() {
     document.body.classList.add('shake');
     setTimeout(() => document.body.classList.remove('shake'), 400);
     overlay.style.display = 'flex';
-    document.getElementById('gameover').textContent = "Game Over!";
+    document.getElementById('gameover').textContent = "GAME OVER";
     saveScore(playerNameInput.value, score);
-    
     shareBtn.style.display = 'block';
-    shareBtn.onclick = () => {
-        let text = `הצלחתי להשיג ${score} נקודות במשחק של דור! מי מצליח לעקוף אותי? ${window.location.href}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    };
 }
 
-// שליטה בלחיצות
+shareBtn.onclick = () => {
+    let text = `השגתי ${score} נקודות במשחק של דור! בואו נראה אתכם: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+};
+
 window.addEventListener('mousedown', (e) => { 
     if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; 
     if(!running) return; 
@@ -186,5 +169,4 @@ window.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 retryBtn.onclick = () => { if (!running) start(); };
-
 loadLeaderboard();
