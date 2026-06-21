@@ -1,4 +1,3 @@
-// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
   authDomain: "dor-akav-game.firebaseapp.com",
@@ -8,7 +7,6 @@ const firebaseConfig = {
   appId: "1:630792064093:web:3a7c53b696e86899b8",
   measurementId: "G-LM4P75B50D"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -19,158 +17,119 @@ function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.inne
 window.addEventListener('resize', resize);
 resize();
 
-const scoreEl = document.getElementById('score');
-const highEl = document.getElementById('high');
-const overlay = document.getElementById('overlay');
-const retryBtn = document.getElementById('retry');
-const playerNameInput = document.getElementById('playerName');
-const scoresList = document.getElementById('scoresList');
+const scoreEl = document.getElementById('score'), highEl = document.getElementById('high'), overlay = document.getElementById('overlay'), 
+      retryBtn = document.getElementById('retry'), playerNameInput = document.getElementById('playerName'), 
+      scoresList = document.getElementById('scoresList'), shieldStatus = document.getElementById('shieldStatus'), shareBtn = document.getElementById('shareBtn');
 
-// טעינת תמונה פעם אחת מראש
-const playerImg = new Image();
-playerImg.src = 'me.png.JPG'; 
+const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
-jumpSound.preload = 'auto';
 
 let high = parseInt(localStorage.getItem('onetap_high')||'0');
 highEl.textContent = 'High: ' + high;
 
-let player = { x: 50, y: 0, r: 25, vy: 0 };
-let gravity = 0.4;
-let jump = -7;
-let pipes = [];
-let spawnTimer = 0;
-let score = 0;
-let running = false;
-let currentSpeed = 3;
-let lastTime = 0;
+let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false };
+let gravity = 0.4, jump = -7, pipes = [], items = [], score = 0, running = false, currentSpeed = 3, spawnTimer = 0, lastTime = 0;
 
-// מניעת תקיעות בלחיצה על תיבת הטקסט
 playerNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
 playerNameInput.addEventListener('touchstart', (e) => e.stopPropagation());
 
 async function loadLeaderboard() {
     try {
-        const snapshot = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
-        let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<p style="margin:5px 0;">${data.name}: ${data.score}</p>`;
+        const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
+        let html = '', medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+        let i = 0;
+        snap.forEach(doc => {
+            let d = doc.data();
+            html += `<p>${medals[i] || '🏅'} ${d.name}: ${d.score}</p>`;
+            i++;
         });
         scoresList.innerHTML = html || 'No scores yet!';
     } catch (e) { console.log(e); }
 }
 
-async function saveScore(name, finalScore) {
-    if (!name || name.trim() === "") name = "Anonymous";
-    if (finalScore === 0) return;
-    try {
-        await db.collection('scores').add({
-            name: name, score: finalScore, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        loadLeaderboard();
-    } catch (e) { console.log(e); }
+async function saveScore(name, s) {
+    if (s === 0) return;
+    await db.collection('scores').add({ name: name || "Anonymous", score: s, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    loadLeaderboard();
 }
-
-function playerJump() {
-    if (running) {
-        player.vy = jump;
-        jumpSound.currentTime = 0;
-        jumpSound.play().catch(() => {});
-    }
-}
-
-window.addEventListener('mousedown', (e) => {
-    if (e.target === playerNameInput || e.target === retryBtn) return;
-    playerJump();
-});
-
-window.addEventListener('touchstart', (e) => {
-    if (e.target === playerNameInput || e.target === retryBtn) return;
-    if (running) e.preventDefault();
-    playerJump();
-}, { passive: false });
-
-retryBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (!running) start();
-};
 
 function start() {
-    running = true;
-    score = 0;
-    pipes = [];
-    player.y = H / 2;
-    player.vy = 0;
-    player.x = W * 0.2;
-    currentSpeed = 3;
-    scoreEl.textContent = "Score: 0";
-    overlay.style.display = 'none'; 
+    running = true; score = 0; pipes = []; items = [];
+    player.y = H / 2; player.vy = 0; player.hasShield = false;
+    currentSpeed = 3; scoreEl.textContent = "Score: 0";
+    shieldStatus.textContent = ""; overlay.style.display = 'none';
+    shareBtn.style.display = 'none';
     lastTime = performance.now();
     requestAnimationFrame(loop);
 }
 
-function spawnPair() {
+function spawnObject() {
     let gap = Math.max(150, 260 - (score * 2));
-    const center = Math.random() * (H - gap - 100) + 50 + gap / 2;
-    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${Math.random() * 360}, 70%, 50%)` });
+    let center = Math.random() * (H - gap - 100) + 50 + gap/2;
+    pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, color: `hsl(${score * 10 % 360}, 70%, 50%)` });
+    
+    // סיכוי להופעת מטבע או מגן
+    if (Math.random() > 0.7) {
+        items.push({ x: W + 150, y: center, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
+    }
 }
 
 function loop(timestamp) {
     if (!running) return;
-
-    // חישוב זמן חלק (Delta Time) למניעת קפיצות
-    const dt = timestamp - lastTime;
+    let dt = timestamp - lastTime;
     lastTime = timestamp;
 
-    ctx.clearRect(0, 0, W, H);
+    // רקע יום/לילה לפי ניקוד
+    let hue = Math.max(200 - score, 10); 
+    ctx.fillStyle = `hsl(210, 50%, ${hue}%)`;
+    ctx.fillRect(0, 0, W, H);
 
-    currentSpeed = 3 + (score * 0.1);
-    
+    currentSpeed = 3 + (score * 0.05);
     spawnTimer += dt;
-    if (spawnTimer > 1500) {
-        spawnTimer = 0;
-        spawnPair();
-    }
+    if (spawnTimer > 1500) { spawnTimer = 0; spawnObject(); }
 
     player.vy += gravity;
     player.y += player.vy;
+    player.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, player.vy * 0.1));
 
     for (let i = pipes.length - 1; i >= 0; i--) {
-        let p = pipes[i];
-        p.x -= currentSpeed;
-
+        let p = pipes[i]; p.x -= currentSpeed;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, 0, 60, p.topH);
         ctx.fillRect(p.x, p.botY, 60, H - p.botY);
 
-        if (!p.passed && p.x < player.x) {
-            p.passed = true;
-            score++;
-            scoreEl.textContent = "Score: " + score;
-        }
-
-        if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
-            if (player.y - player.r < p.topH || player.y + player.r > p.botY) gameOver();
-        }
+        if (!p.passed && p.x < player.x) { p.passed = true; score++; scoreEl.textContent = "Score: " + score; }
         
-        // מחיקה יעילה מהזיכרון
+        if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
+            if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
+                if (player.hasShield) { player.hasShield = false; shieldStatus.textContent = ""; pipes.splice(i, 1); }
+                else gameOver();
+            }
+        }
         if (p.x < -100) pipes.splice(i, 1);
     }
 
-    if (player.y > H || player.y < 0) gameOver();
-    
-    // ציור אופטימלי של התמונה
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-    ctx.clip();
-    if (playerImg.complete) {
-        ctx.drawImage(playerImg, player.x - player.r, player.y - player.r, player.r * 2, player.r * 2);
-    } else {
-        ctx.fillStyle = '#f59e0b';
-        ctx.fill();
+    for (let i = items.length - 1; i >= 0; i--) {
+        let it = items[i]; it.x -= currentSpeed;
+        ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
+        ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
+        
+        let dx = player.x - it.x, dy = player.y - it.y;
+        if (Math.sqrt(dx*dx + dy*dy) < player.r + it.r) {
+            if (it.type === 'shield') { player.hasShield = true; shieldStatus.textContent = "🛡️ SHIELD ACTIVE"; }
+            else { score += 5; scoreEl.textContent = "Score: " + score; }
+            items.splice(i, 1);
+        }
     }
+
+    if (player.y > H || player.y < 0) gameOver();
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.angle);
+    ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2); ctx.clip();
+    if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r * 2, player.r * 2);
+    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5; ctx.stroke(); }
     ctx.restore();
 
     requestAnimationFrame(loop);
@@ -178,9 +137,20 @@ function loop(timestamp) {
 
 function gameOver() {
     running = false;
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 400);
     overlay.style.display = 'flex';
     document.getElementById('gameover').textContent = "Game Over!";
     saveScore(playerNameInput.value, score);
+    
+    shareBtn.style.display = 'block';
+    shareBtn.onclick = () => {
+        let text = `הצלחתי להשיג ${score} נקודות במשחק של דור! מי מצליח לעקוף אותי? ${window.location.href}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    };
 }
 
+window.addEventListener('mousedown', (e) => { if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; if(!running) return; player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); });
+window.addEventListener('touchstart', (e) => { if (e.target.id === 'playerName' || e.target.id === 'retry' || e.target.id === 'shareBtn') return; if(running) e.preventDefault(); player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }, { passive: false });
+retryBtn.onclick = () => { if (!running) start(); };
 loadLeaderboard();
