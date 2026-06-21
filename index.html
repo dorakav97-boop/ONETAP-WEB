@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>OneTap PRO - Ultimate Edition</title>
+  <title>OneTap PRO</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -19,12 +19,12 @@
   
   <div id="overlay">
     <div id="gameover">OneTap PRO</div>
-    <input type="text" id="playerName" placeholder="Enter Your Name" maxlength="12">
+    <input type="text" id="playerName" placeholder="Your Name" maxlength="12">
     <button id="retry">Start Game</button>
-    <button id="shareBtn" style="background: #25D366; margin-top: 5px; display:none;">Share to WhatsApp 📱</button>
+    <button id="shareBtn" style="background: #25D366; display:none;">WhatsApp Share</button>
     
     <div id="leaderboard">
-        <h3>🏆 Global Leaderboard</h3>
+        <h3 style="margin:0 0 10px 0; color:#06b6d4;">🏆 Top Scores</h3>
         <div id="scoresList">Loading...</div>
     </div>
   </div>
