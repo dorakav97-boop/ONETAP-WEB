@@ -12,7 +12,10 @@ const db = firebase.firestore();
 
 const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
 let W, H;
-function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+function resize(){ 
+    W=canvas.width=window.innerWidth; 
+    H=canvas.height=window.innerHeight; 
+}
 window.addEventListener('resize', resize);
 resize();
 
@@ -23,6 +26,7 @@ const scoreEl = document.getElementById('score'), highEl = document.getElementBy
 
 const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
+jumpSound.preload = 'auto';
 
 let high = parseInt(localStorage.getItem('onetap_high')||'0');
 highEl.textContent = 'High: ' + high;
@@ -31,27 +35,22 @@ let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false, trail: [] 
 let gravity = 0.4, jump = -7, pipes = [], items = [], particles = [], clouds = [], score = 0, running = false, 
     currentSpeed = 3.5, spawnTimer = 0, lastTime = 0, level = 1, combo = 0, sloMo = 1;
 
-for(let i=0; i<10; i++) clouds.push({x: Math.random()*W, y: Math.random()*H, s: 0.1 + Math.random()*0.2, r: 20+Math.random()*40});
+// אתחול עננים פעם אחת
+for(let i=0; i<8; i++) clouds.push({x: Math.random()*W, y: Math.random()*H*0.6, s: 0.1 + Math.random()*0.2, r: 30+Math.random()*40});
 
 async function loadLeaderboard() {
     try {
         const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
         let html = '', medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
         let i = 0;
-        snap.forEach(doc => { html += `<p>${medals[i++] || '🏅'} ${doc.data().name}: ${doc.data().score}</p>`; });
+        snap.forEach(doc => { html += `<p style="margin:5px 0;">${medals[i++] || '🏅'} ${doc.data().name}: ${doc.data().score}</p>`; });
         scoresList.innerHTML = html || 'No scores yet!';
     } catch (e) { console.log(e); }
 }
 
-async function saveScore(name, s) {
-    if (s === 0) return;
-    await db.collection('scores').add({ name: name || "Legend", score: s, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-    loadLeaderboard();
-}
-
-function createParticles(x, y, color, count=10) {
-    for (let i = 0; i < count; i++) {
-        particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, life: 1.0, color: color });
+function createParticles(x, y, color) {
+    for (let i = 0; i < 8; i++) {
+        particles.push({ x: x, y: y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 1.0, color: color });
     }
 }
 
@@ -65,72 +64,75 @@ function start() {
 }
 
 function spawnObject() {
-    let gap = Math.max(140, 260 - (score * 2.5));
+    let gap = Math.max(150, 260 - (score * 2));
     let center = Math.random() * (H - gap - 120) + 60 + gap/2;
-    let moveDist = level > 2 ? Math.min(120, (level-2)*25) : 0;
-    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed: false, color: `hsl(${score * 15 % 360}, 70%, 50%)`, move: moveDist, offset: Math.random()*5 });
-    
-    if (Math.random() > 0.7) {
-        let type = Math.random() > 0.9 ? 'shield' : 'coin'; // הורדתי את הטורבו כאן
-        items.push({ x: W + 100, y: center + (Math.random()-0.5)*80, r: 15, type: type });
+    let moveDist = level > 2 ? Math.min(100, (level-2)*20) : 0;
+    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed: false, color: `hsl(${score * 10 % 360}, 60%, 50%)`, move: moveDist, offset: Math.random()*5 });
+    if (Math.random() > 0.8) {
+        items.push({ x: W + 100, y: center + (Math.random()-0.5)*60, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
     }
 }
 
 function loop(timestamp) {
     if (!running) return;
-    let dt = (timestamp - lastTime) * sloMo;
+    let dt = (timestamp - lastTime);
+    if (dt > 100) dt = 16; // מונע קפיצה ענקית אם היתה תקיעה
     lastTime = timestamp;
 
-    ctx.fillStyle = `hsl(${220 + level*10}, 30%, ${Math.max(5, 15 - score*0.1)}%)`;
+    let adjustedDt = dt * sloMo / 16;
+
+    // רקע
+    let lightness = Math.max(5, 20 - (score * 0.2)); 
+    ctx.fillStyle = `hsl(220, 40%, ${lightness}%)`;
     ctx.fillRect(0, 0, W, H);
 
+    // עננים
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
     clouds.forEach(c => {
-        c.x -= currentSpeed * c.s * sloMo;
-        if (c.x < -c.r) c.x = W + c.r;
-        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        c.x -= currentSpeed * c.s * adjustedDt;
+        if (c.x < -c.r*2) c.x = W + c.r*2;
         ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
     });
 
-    currentSpeed = 3.5 + (score * 0.08);
-    spawnTimer += dt;
+    currentSpeed = 3.5 + (score * 0.05);
+    spawnTimer += dt * sloMo;
     if (spawnTimer > 1500) { spawnTimer = 0; spawnObject(); }
 
-    player.vy += gravity * sloMo; player.y += player.vy * sloMo;
-    player.angle = player.vy * 0.1;
+    player.vy += gravity * adjustedDt; 
+    player.y += player.vy * adjustedDt;
+    player.angle = Math.max(-0.5, Math.min(0.5, player.vy * 0.1));
 
-    player.trail.push({x: player.x, y: player.y});
-    if (player.trail.length > 8) player.trail.shift();
+    // שובל אופטימלי
+    if (timestamp % 32 < 16) {
+        player.trail.push({x: player.x, y: player.y, a: player.angle});
+        if (player.trail.length > 5) player.trail.shift();
+    }
+
     player.trail.forEach((t, i) => {
-        ctx.globalAlpha = i / 16;
-        ctx.drawImage(playerImg, t.x-player.r, t.y-player.r, player.r*2, player.r*2);
+        ctx.globalAlpha = i / 15;
+        ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.a);
+        if(playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
+        ctx.restore();
     });
     ctx.globalAlpha = 1;
 
+    // מכשולים
     for (let i = pipes.length - 1; i >= 0; i--) {
-        let p = pipes[i]; p.x -= currentSpeed * sloMo;
-        let yShift = Math.sin(timestamp/600 + p.offset) * p.move;
+        let p = pipes[i]; p.x -= currentSpeed * adjustedDt;
+        let yShift = p.move > 0 ? Math.sin(timestamp/600 + p.offset) * p.move : 0;
+        
         ctx.fillStyle = p.color;
-        ctx.shadowBlur = 15; ctx.shadowColor = p.color;
         ctx.fillRect(p.x, yShift, 60, p.topH);
-        ctx.fillRect(p.x, p.botY + yShift, 60, H - p.botY - yShift);
-        ctx.shadowBlur = 0;
+        ctx.fillRect(p.x, p.botY + yShift, 60, H - (p.botY + yShift));
 
         if (!p.passed && p.x < player.x) { 
             p.passed = true; score++; combo++;
-            let comboBonus = Math.floor(combo/5);
-            score += comboBonus;
             scoreEl.textContent = score;
-            
-            if (Math.abs(player.y - (p.topH + yShift)) < 15 || Math.abs(player.y - (p.botY + yShift)) < 15) {
-                sloMo = 0.3; ctx.fillStyle = "white"; ctx.fillRect(0,0,W,H);
-                setTimeout(()=>sloMo = 1, 150);
-            }
-
             if (score % 10 === 0) {
                 level++;
                 const l = document.createElement('div'); l.className = 'level-up';
                 l.textContent = "LEVEL " + level; document.body.appendChild(l);
-                setTimeout(()=>l.remove(), 2000);
+                setTimeout(()=>l.remove(), 1500);
             }
         }
         
@@ -138,7 +140,7 @@ function loop(timestamp) {
             if (player.y - player.r < p.topH + yShift || player.y + player.r > p.botY + yShift) {
                 if (player.hasShield) { 
                     player.hasShield = false; shieldStatus.textContent = ""; 
-                    createParticles(player.x, player.y, "#38bdf8", 20);
+                    createParticles(player.x, player.y, "#38bdf8");
                     pipes.splice(i, 1); 
                 } else gameOver();
             }
@@ -146,33 +148,41 @@ function loop(timestamp) {
         if (p.x < -100) pipes.splice(i, 1);
     }
 
-    items.forEach((it, i) => {
-        it.x -= currentSpeed * sloMo;
+    // פריטים
+    for (let i = items.length - 1; i >= 0; i--) {
+        let it = items[i]; it.x -= currentSpeed * adjustedDt;
         let col = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
-        ctx.fillStyle = col; ctx.shadowBlur = 20; ctx.shadowColor = col;
-        ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
+        
         if (Math.hypot(player.x-it.x, player.y-it.y) < player.r + it.r) {
-            createParticles(it.x, it.y, col, 20);
-            if (it.type === 'shield') { player.hasShield = true; shieldStatus.textContent = "🛡️ SHIELD"; shieldStatus.style.color="#38bdf8"; }
-            else score += 10;
+            createParticles(it.x, it.y, col);
+            if (it.type === 'shield') { player.hasShield = true; shieldStatus.textContent = "🛡️ SHIELD"; }
+            else score += 5;
             items.splice(i, 1);
         }
-    });
+        if (it.x < -50) items.splice(i, 1);
+    }
 
-    particles.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-        ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+    // חלקיקים
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx * adjustedDt; p.y += p.vy * adjustedDt; p.life -= 0.03;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, 4, 4);
-        if (p.life <= 0) particles.splice(i, 1);
-    });
+    }
     ctx.globalAlpha = 1;
 
     if (player.y > H || player.y < 0) gameOver();
 
+    // שחקן
     ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
     ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2); ctx.clip();
     if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r * 2, player.r * 2);
-    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6; ctx.stroke(); }
+    else { ctx.fillStyle = '#f59e0b'; ctx.fill(); }
+    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5; ctx.stroke(); }
     ctx.restore();
 
     requestAnimationFrame(loop);
@@ -183,28 +193,24 @@ function gameOver() {
     setTimeout(() => document.body.classList.remove('shake'), 400);
     overlay.style.display = 'flex';
     shareWA.style.display = 'block'; shareTG.style.display = 'block';
-    document.getElementById('gameover').textContent = "SCORE: " + score;
-    saveScore(playerNameInput.value, score);
-    if (score > high) { high = score; localStorage.setItem('onetap_high', high); highEl.textContent = "High: " + high; }
+    document.getElementById('gameover').textContent = "FINAL: " + score;
+    db.collection('scores').add({ name: playerNameInput.value || "Legend", score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    loadLeaderboard();
 }
 
 shareWA.onclick = () => {
-    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑 ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent('הגעתי ל-'+score+' נקודות במשחק של דור! עקפו אותי: '+window.location.href)}`, '_blank');
 };
-
 shareTG.onclick = () => {
-    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑`;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent('הגעתי ל-'+score+' נקודות!')}`, '_blank');
 };
 
-const inputIds = ['playerName','retry','shareWA','shareTG'];
 window.addEventListener('mousedown', (e) => { 
-    if (inputIds.includes(e.target.id)) return;
+    if (['playerName','retry','shareWA','shareTG'].includes(e.target.id)) return;
     if(running) { player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
 });
 window.addEventListener('touchstart', (e) => { 
-    if (inputIds.includes(e.target.id)) return;
+    if (['playerName','retry','shareWA','shareTG'].includes(e.target.id)) return;
     if(running) { e.preventDefault(); player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
 }, { passive: false });
 
