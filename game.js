@@ -19,7 +19,7 @@ resize();
 const scoreEl = document.getElementById('score'), highEl = document.getElementById('high'), overlay = document.getElementById('overlay'), 
       retryBtn = document.getElementById('retry'), playerNameInput = document.getElementById('playerName'), 
       scoresList = document.getElementById('scoresList'), shieldStatus = document.getElementById('shieldStatus'), 
-      shareBtn = document.getElementById('shareBtn'), levelMsg = document.getElementById('levelMsg');
+      shareWA = document.getElementById('shareWA'), shareTG = document.getElementById('shareTG');
 
 const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
@@ -27,7 +27,7 @@ const jumpSound = new Audio('jump.mp3.wav');
 let high = parseInt(localStorage.getItem('onetap_high')||'0');
 highEl.textContent = 'High: ' + high;
 
-let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false, turbo: 0, trail: [] };
+let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false, trail: [] };
 let gravity = 0.4, jump = -7, pipes = [], items = [], particles = [], clouds = [], score = 0, running = false, 
     currentSpeed = 3.5, spawnTimer = 0, lastTime = 0, level = 1, combo = 0, sloMo = 1;
 
@@ -56,21 +56,22 @@ function createParticles(x, y, color, count=10) {
 }
 
 function start() {
-    running = true; score = 0; level = 1; combo = 0; pipes = []; items = []; particles = [];
-    player.y = H / 2; player.vy = 0; player.hasShield = false; player.turbo = 0;
+    running = true; score = 0; level = 1; combo = 0; pipes = []; items = []; particles = []; player.trail = [];
+    player.y = H / 2; player.vy = 0; player.hasShield = false;
     currentSpeed = 3.5; scoreEl.textContent = "0"; overlay.style.display = 'none';
+    shareWA.style.display = 'none'; shareTG.style.display = 'none';
     lastTime = performance.now();
     requestAnimationFrame(loop);
 }
 
 function spawnObject() {
-    let gap = Math.max(140, 260 - (score * 2));
+    let gap = Math.max(140, 260 - (score * 2.5));
     let center = Math.random() * (H - gap - 120) + 60 + gap/2;
     let moveDist = level > 2 ? Math.min(120, (level-2)*25) : 0;
-    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed: false, color: `hsl(${level*40}, 80%, 60%)`, move: moveDist, offset: Math.random()*5 });
+    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed: false, color: `hsl(${score * 15 % 360}, 70%, 50%)`, move: moveDist, offset: Math.random()*5 });
     
     if (Math.random() > 0.7) {
-        let type = Math.random() > 0.9 ? 'turbo' : (Math.random() > 0.8 ? 'shield' : 'coin');
+        let type = Math.random() > 0.9 ? 'shield' : 'coin'; // הורדתי את הטורבו כאן
         items.push({ x: W + 100, y: center + (Math.random()-0.5)*80, r: 15, type: type });
     }
 }
@@ -80,7 +81,6 @@ function loop(timestamp) {
     let dt = (timestamp - lastTime) * sloMo;
     lastTime = timestamp;
 
-    // רקע דינמי
     ctx.fillStyle = `hsl(${220 + level*10}, 30%, ${Math.max(5, 15 - score*0.1)}%)`;
     ctx.fillRect(0, 0, W, H);
 
@@ -91,16 +91,13 @@ function loop(timestamp) {
         ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
     });
 
-    if (player.turbo > 0) { player.turbo -= dt; currentSpeed = 12; } 
-    else { currentSpeed = 3.5 + (score * 0.08); }
-
+    currentSpeed = 3.5 + (score * 0.08);
     spawnTimer += dt;
     if (spawnTimer > 1500) { spawnTimer = 0; spawnObject(); }
 
-    if (player.turbo <= 0) { player.vy += gravity * sloMo; player.y += player.vy * sloMo; }
+    player.vy += gravity * sloMo; player.y += player.vy * sloMo;
     player.angle = player.vy * 0.1;
 
-    // ציור שובל
     player.trail.push({x: player.x, y: player.y});
     if (player.trail.length > 8) player.trail.shift();
     player.trail.forEach((t, i) => {
@@ -112,7 +109,6 @@ function loop(timestamp) {
     for (let i = pipes.length - 1; i >= 0; i--) {
         let p = pipes[i]; p.x -= currentSpeed * sloMo;
         let yShift = Math.sin(timestamp/600 + p.offset) * p.move;
-        
         ctx.fillStyle = p.color;
         ctx.shadowBlur = 15; ctx.shadowColor = p.color;
         ctx.fillRect(p.x, yShift, 60, p.topH);
@@ -123,11 +119,10 @@ function loop(timestamp) {
             p.passed = true; score++; combo++;
             let comboBonus = Math.floor(combo/5);
             score += comboBonus;
-            scoreEl.textContent = score + (comboBonus > 0 ? ` +${comboBonus+1}` : "");
+            scoreEl.textContent = score;
             
-            // אפקט SLO-MO בכמעט פסילה
             if (Math.abs(player.y - (p.topH + yShift)) < 15 || Math.abs(player.y - (p.botY + yShift)) < 15) {
-                sloMo = 0.3; ctx.fillStyle = "white"; ctx.fillRect(0,0,W,H); // הבזק
+                sloMo = 0.3; ctx.fillStyle = "white"; ctx.fillRect(0,0,W,H);
                 setTimeout(()=>sloMo = 1, 150);
             }
 
@@ -139,10 +134,13 @@ function loop(timestamp) {
             }
         }
         
-        if (player.turbo <= 0 && player.x + player.r > p.x && player.x - player.r < p.x + 60) {
+        if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
             if (player.y - player.r < p.topH + yShift || player.y + player.r > p.botY + yShift) {
-                if (player.hasShield) { player.hasShield = false; createParticles(player.x, player.y, "#38bdf8", 20); pipes.splice(i, 1); }
-                else gameOver();
+                if (player.hasShield) { 
+                    player.hasShield = false; shieldStatus.textContent = ""; 
+                    createParticles(player.x, player.y, "#38bdf8", 20);
+                    pipes.splice(i, 1); 
+                } else gameOver();
             }
         }
         if (p.x < -100) pipes.splice(i, 1);
@@ -150,13 +148,12 @@ function loop(timestamp) {
 
     items.forEach((it, i) => {
         it.x -= currentSpeed * sloMo;
-        let col = it.type === 'shield' ? '#38bdf8' : (it.type === 'turbo' ? '#4ade80' : '#fbbf24');
+        let col = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
         ctx.fillStyle = col; ctx.shadowBlur = 20; ctx.shadowColor = col;
         ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
         if (Math.hypot(player.x-it.x, player.y-it.y) < player.r + it.r) {
             createParticles(it.x, it.y, col, 20);
-            if (it.type === 'shield') player.hasShield = true;
-            else if (it.type === 'turbo') player.turbo = 3000;
+            if (it.type === 'shield') { player.hasShield = true; shieldStatus.textContent = "🛡️ SHIELD"; shieldStatus.style.color="#38bdf8"; }
             else score += 10;
             items.splice(i, 1);
         }
@@ -176,7 +173,6 @@ function loop(timestamp) {
     ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2); ctx.clip();
     if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r * 2, player.r * 2);
     if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6; ctx.stroke(); }
-    if (player.turbo > 0) { ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 10; ctx.stroke(); }
     ctx.restore();
 
     requestAnimationFrame(loop);
@@ -186,18 +182,23 @@ function gameOver() {
     running = false; document.body.classList.add('shake');
     setTimeout(() => document.body.classList.remove('shake'), 400);
     overlay.style.display = 'flex';
+    shareWA.style.display = 'block'; shareTG.style.display = 'block';
     document.getElementById('gameover').textContent = "SCORE: " + score;
     saveScore(playerNameInput.value, score);
     if (score > high) { high = score; localStorage.setItem('onetap_high', high); highEl.textContent = "High: " + high; }
-    shareBtn.style.display = 'block';
 }
 
-shareBtn.onclick = () => {
-    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי מצליח לעקוף? 👑 ${window.location.href}`;
+shareWA.onclick = () => {
+    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑 ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
 };
 
-const inputIds = ['playerName','retry','shareBtn'];
+shareTG.onclick = () => {
+    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+};
+
+const inputIds = ['playerName','retry','shareWA','shareTG'];
 window.addEventListener('mousedown', (e) => { 
     if (inputIds.includes(e.target.id)) return;
     if(running) { player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
