@@ -79,10 +79,20 @@ function loop(timestamp) {
     let dt = timestamp - lastTime;
     lastTime = timestamp;
 
-    // רקע יום/לילה לפי ניקוד
-    let hue = Math.max(200 - score, 10); 
-    ctx.fillStyle = `hsl(210, 50%, ${hue}%)`;
+    
+    // רקע דינמי שמשתנה מכחול לסגול-שחור
+    let lightness = Math.max(5, 50 - (score * 0.5)); // הופך כהה יותר
+    let colorHue = 210 + (score * 0.5); // משנה גוון מכחול לסגול
+    ctx.fillStyle = `hsl(${colorHue}, 50%, ${lightness}%)`;
     ctx.fillRect(0, 0, W, H);
+
+    // הוספת "כוכבים" קטנים אם זה לילה (ניקוד גבוה מ-20)
+    if (score > 20) {
+        ctx.fillStyle = "white";
+        for(let i=0; i<10; i++) {
+            ctx.fillRect((Math.sin(i*500)*W), (Math.cos(i*1000)*H), 2, 2);
+        }
+    }
 
     currentSpeed = 3 + (score * 0.05);
     spawnTimer += dt;
