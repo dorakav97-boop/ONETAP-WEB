@@ -22,24 +22,29 @@ const scoreEl = document.getElementById('score'), overlay = document.getElementB
 
 const jumpSound = new Audio('jump.mp3.wav');
 
+// Skin Logic
 let currentSkinIdx = 0;
 const skins = [
     {icon: "🔥", color: "#f97316"}, {icon: "💎", color: "#06b6d4"},
     {icon: "🌈", color: "#a855f7"}, {icon: "⚡", color: "#fbbf24"}, {icon: "💀", color: "#94a3b8"}
 ];
 
-// טיפול בבחירת סקין
 document.querySelectorAll('.skin-item').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // מונע מהלחיצה להגיע למשחק
+    btn.onclick = (e) => {
+        e.stopPropagation();
         currentSkinIdx = parseInt(btn.getAttribute('data-idx'));
         document.querySelectorAll('.skin-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-    });
+    };
 });
 
-let player = { x: 90, y: 0, r: 24, vy: 0, trail: [] };
-let pipes = [], score = 0, combo = 0, running = false, lastTime = 0, speed = 4.5, gravity = 0.45, jump = -8;
+// Game Values - BALANCED
+let player = { x: 80, y: 0, r: 24, vy: 0, trail: [] };
+let pipes = [], stars = [], score = 0, combo = 0, running = false, lastTime = 0;
+let speed = 3.5, gravity = 0.35, jump = -6.5;
+
+// Init Stars
+for(let i=0; i<40; i++) stars.push({x: Math.random()*W, y: Math.random()*H, s: Math.random()*2});
 
 async function loadLeaderboard() {
     try {
@@ -54,48 +59,49 @@ async function loadLeaderboard() {
 }
 
 function showMessage(txt) {
-    const m = document.createElement('div');
-    m.className = 'poper'; m.textContent = txt;
-    m.style.left = '50%'; m.style.top = '40%';
-    document.body.appendChild(m);
+    const m = document.createElement('div'); m.className = 'poper'; m.textContent = txt;
+    m.style.left = '50%'; m.style.top = '40%'; document.body.appendChild(m);
     setTimeout(() => m.remove(), 800);
 }
 
 function start() {
     running = true; score = 0; combo = 0; pipes = []; player.trail = [];
-    player.y = H/2; player.vy = 0; speed = 4.8;
-    scoreEl.textContent = "0";
-    overlay.style.display = 'none';
+    player.y = H/2; player.vy = 0; speed = 3.5;
+    scoreEl.textContent = "0"; overlay.style.display = 'none';
     lastTime = performance.now();
     requestAnimationFrame(loop);
 }
 
 function spawn() {
-    let gap = Math.max(140, 210 - (score * 2));
-    let center = Math.random() * (H - gap - 150) + 75 + gap/2;
+    let gap = Math.max(160, 220 - (score * 1.5)); // רווח גדול יותר שנסגר לאט יותר
+    let center = Math.random() * (H - gap - 160) + 80 + gap/2;
     pipes.push({ x: W, top: center-gap/2, bot: center+gap/2, done: false, color: skins[currentSkinIdx].color });
 }
 
 function loop(t) {
     if (!running) return;
-    let dt = t - lastTime;
-    if (dt > 100) dt = 16;
-    lastTime = t;
+    let dt = t - lastTime; if (dt > 100) dt = 16; lastTime = t;
 
-    ctx.fillStyle = "#05080a";
-    ctx.fillRect(0, 0, W, H);
+    // רקע כחול עמוק יפה
+    ctx.fillStyle = "#0b1220"; ctx.fillRect(0, 0, W, H);
+    
+    // כוכבים זזים
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    stars.forEach(s => {
+        s.x -= speed * 0.2; if(s.x < 0) s.x = W;
+        ctx.fillRect(s.x, s.y, s.s, s.s);
+    });
 
     player.vy += gravity;
     player.y += player.vy;
 
-    if (t % 1100 < 20) spawn();
+    if (t % 1300 < 20) spawn();
 
     player.trail.push({y: player.y});
-    if(player.trail.length > 6) player.trail.shift();
+    if(player.trail.length > 5) player.trail.shift();
     player.trail.forEach((pos, i) => {
-        ctx.globalAlpha = i / 12;
-        ctx.font = (20 + i*2) + "px Arial";
-        ctx.fillText(skins[currentSkinIdx].icon, player.x - (6-i)*5, pos.y);
+        ctx.globalAlpha = i / 15; ctx.font = (22 + i*2) + "px Arial";
+        ctx.fillText(skins[currentSkinIdx].icon, player.x - (5-i)*6, pos.y);
     });
     ctx.globalAlpha = 1;
 
@@ -107,10 +113,13 @@ function loop(t) {
 
         if(!p.done && p.x < player.x) {
             p.done = true; score++; combo++; scoreEl.textContent = score;
-            if(score % 10 === 0) { speed += 0.4; showMessage("LEVEL UP! 🚀"); }
+            if(score % 5 === 0) speed += 0.2; // עליה איטית במהירות
+            if(combo === 5) showMessage("GREAT! ✨");
+            if(combo === 15) showMessage("UNSTOPPABLE! 🔥");
         }
-        if(player.x+20 > p.x && player.x-20 < p.x+60) {
-            if(player.y-20 < p.top || player.y+20 > p.bot) die();
+        // Collision (נשאר מדויק)
+        if(player.x+18 > p.x && player.x-18 < p.x+60) {
+            if(player.y-18 < p.top || player.y+18 > p.bot) die();
         }
         if(p.x < -70) pipes.splice(i, 1);
     }
@@ -118,9 +127,9 @@ function loop(t) {
     if(player.y > H || player.y < 0) die();
 
     ctx.font = "45px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    if(combo > 5) {
-        ctx.strokeStyle = skins[currentSkinIdx].color; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(player.x, player.y, 30 + Math.sin(t/100)*5, 0, Math.PI*2); ctx.stroke();
+    if(combo > 10) {
+        ctx.strokeStyle = skins[currentSkinIdx].color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(player.x, player.y, 32, 0, 7); ctx.stroke();
     }
     ctx.fillText(skins[currentSkinIdx].icon, player.x, player.y);
 
@@ -128,33 +137,17 @@ function loop(t) {
 }
 
 function die() {
-    running = false;
-    overlay.style.display = 'flex';
-    db.collection('scores').add({
-        name: playerNameInput.value || "Anonymous",
-        score: score,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    running = false; overlay.style.display = 'flex';
+    if(score > 0) db.collection('scores').add({ name: playerNameInput.value || "Legend", score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
     loadLeaderboard();
 }
 
-// ניהול לחיצות - מתקן את הבעיה שהצגת
-window.addEventListener('mousedown', (e) => {
-    if (overlay.style.display !== 'none') return; // לא קופץ כשהלובי פתוח
-    player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{});
-});
-
-window.addEventListener('touchstart', (e) => {
-    if (overlay.style.display !== 'none') return; // לא קופץ כשהלובי פתוח
-    e.preventDefault();
-    player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{});
+window.addEventListener('mousedown', () => { if (overlay.style.display === 'none') { player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); } });
+window.addEventListener('touchstart', (e) => { 
+    if (overlay.style.display === 'none') { e.preventDefault(); player.vy = jump; jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
 }, { passive: false });
 
-startBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    start();
-});
-
-playerNameInput.addEventListener('click', (e) => e.stopPropagation());
+startBtn.onclick = (e) => { e.stopPropagation(); start(); };
+playerNameInput.onclick = (e) => e.stopPropagation();
 
 loadLeaderboard();
