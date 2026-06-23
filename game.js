@@ -201,4 +201,3 @@ window.addEventListener('load', () => {
         let h = ""; snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
         list.innerHTML = h || "אין תוצאות";
     }
-});
