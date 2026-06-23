@@ -10,9 +10,9 @@
 </head>
 <body>
   <div id="container">
-    <div id="muteBtn" title="מוט/החזר סאונד">🔊</div>
+    <div id="muteBtn">🔊</div>
 
-    <!-- Main Menu -->
+    <!-- מסך ראשי -->
     <div id="mainMenu" class="screen">
       <div class="menu-content">
         <h1>OneTap MEGA PRO</h1>
@@ -26,80 +26,64 @@
       </div>
     </div>
 
-    <!-- Skins Menu -->
+    <!-- תפריט סקינים -->
     <div id="skinsMenu" class="screen" style="display:none;">
       <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
         <div id="skinsGrid">
-          <div class="skin-option active" data-skin="default">🔵 קלסי</div>
-          <div class="skin-option" data-skin="fire">🔥 אש</div>
-          <div class="skin-option" data-skin="star">⭐ כוכב</div>
-          <div class="skin-option" data-skin="diamond">💎 יהלום</div>
-          <div class="skin-option upload-option" id="uploadSkinBtn">📁 העלה תמונה</div>
+          <div class="skin-option" id="skin-blue">🔵</div>
+          <div class="skin-option" id="skin-fire">🔥</div>
+          <div class="skin-option" id="skin-star">⭐</div>
+          <div class="skin-option" id="skin-ufo">🛸</div>
         </div>
-        <input type="file" id="customSkinInput" accept="image/*" style="display:none;">
         <button class="btn-back" id="backFromSkins">← חזרה</button>
       </div>
     </div>
 
-    <!-- Shop Menu -->
+    <!-- חנות -->
     <div id="shopMenu" class="screen" style="display:none;">
       <div class="menu-content">
         <h2>🛒 חנות כוחות</h2>
         <div class="coins-display">💰 מטבעות: <span id="shopCoins">0</span></div>
         <div id="powerUpsGrid">
-          <div class="power-up-item" data-power="shield" data-cost="100">
+          <div class="power-up-item" id="shield-buy" data-cost="100">
             <div class="power-icon">🛡️</div>
             <h3>מגן</h3>
-            <p>מגן לשחקן (ישמר למשחק הבא)</p>
+            <p>מגן מפני פגיעה אחת</p>
             <div class="power-price">100💰</div>
-          </div>
-          <div class="power-up-item" data-power="slow" data-cost="75">
-            <div class="power-icon">⏱️</div>
-            <h3>האט זמן</h3>
-            <p>האט זמן למשחק הבא</p>
-            <div class="power-price">75💰</div>
           </div>
         </div>
         <button class="btn-back" id="backFromShop">← חזרה</button>
       </div>
     </div>
 
-    <!-- Leaderboard Menu -->
+    <!-- לוח תוצאות -->
     <div id="leaderboardMenu" class="screen" style="display:none;">
       <div class="menu-content">
-        <h2>🏆 לוח תוצאות - TOP 5</h2>
+        <h2>🏆 TOP 5</h2>
         <div id="scoresList">טוען...</div>
         <button class="btn-back" id="backFromLeaderboard">← חזרה</button>
       </div>
     </div>
 
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen" style="display:none;">
+    <!-- מסך משחק -->
+    <div id="gameScreen" class="screen" style="display:none; background: transparent;">
       <div class="game-header">
-        <div class="score-display">נקודות: <span id="score">0</span></div>
-        <div class="combo-display">שלב: <span id="levelDisp">1</span></div>
-        <div class="coins-inline">💰 <span id="coinsDisplay">0</span></div>
+        <div class="score-box">ניקוד: <span id="score">0</span></div>
+        <div class="score-box coins-inline">💰 <span id="coinsDisplay">0</span></div>
       </div>
       <canvas id="game"></canvas>
 
-      <div id="overlay" style="display:flex;">
-        <div id="gameover">OneTap MEGA</div>
-        <input type="text" id="playerName" placeholder="שם שחקן" maxlength="12">
-        <div style="display:flex; gap:10px; flex-direction:column; align-items:center; width:100%;">
-          <button id="retry" class="btn-main">PLAY NOW</button>
-          <button id="homeBtn" class="btn-back">🏠 חזרה לדף הבית</button>
-        </div>
-        <button id="shareWA" style="display:none;">Share to WhatsApp 📱</button>
-        <button id="shareTG" style="display:none;">Share to Telegram ✈️</button>
-        <div id="leaderboard">
-            <h3>🏆 WORLD LEADERS</h3>
-            <div id="scoresListOverlay">Loading...</div>
+      <div id="overlay">
+        <div id="gameover">GAME OVER</div>
+        <input type="text" id="playerName" placeholder="הכנס שם שחקן" maxlength="12">
+        <div class="menu-buttons">
+            <button id="retry" class="btn-main">שחק שוב</button>
+            <button id="homeBtn" class="btn-back">חזרה לתפריט</button>
         </div>
       </div>
     </div>
   </div>
-
   <script src="game.js"></script>
 </body>
 </html>
