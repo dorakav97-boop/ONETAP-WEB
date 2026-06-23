@@ -51,13 +51,13 @@
           <div class="power-up-item" data-power="shield" data-cost="100">
             <div class="power-icon">🛡️</div>
             <h3>מגן</h3>
-            <p>מגן שנשמר למשחק הבא</p>
+            <p>מגן לשחקן (ישמר למשחק הבא)</p>
             <div class="power-price">100💰</div>
           </div>
           <div class="power-up-item" data-power="slow" data-cost="75">
             <div class="power-icon">⏱️</div>
             <h3>האט זמן</h3>
-            <p>השתמש במשחק הבא</p>
+            <p>האט זמן למשחק הבא</p>
             <div class="power-price">75💰</div>
           </div>
         </div>
@@ -86,9 +86,12 @@
       <div id="overlay" style="display:flex;">
         <div id="gameover">OneTap MEGA</div>
         <input type="text" id="playerName" placeholder="שם שחקן" maxlength="12">
-        <button id="retry">PLAY NOW</button>
-        <button id="shareWA" style="background: #25D366; display:none; margin-bottom: 5px;">Share to WhatsApp 📱</button>
-        <button id="shareTG" style="background: #0088cc; display:none;">Share to Telegram ✈️</button>
+        <div style="display:flex; gap:10px; flex-direction:column; align-items:center; width:100%;">
+          <button id="retry" class="btn-main">PLAY NOW</button>
+          <button id="homeBtn" class="btn-back">🏠 חזרה לדף הבית</button>
+        </div>
+        <button id="shareWA" style="display:none;">Share to WhatsApp 📱</button>
+        <button id="shareTG" style="display:none;">Share to Telegram ✈️</button>
         <div id="leaderboard">
             <h3>🏆 WORLD LEADERS</h3>
             <div id="scoresListOverlay">Loading...</div>
