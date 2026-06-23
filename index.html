@@ -45,10 +45,15 @@
         <h2>🛒 חנות</h2>
         <div class="coins-display">💰 מטבעות: <span id="shopCoins">0</span></div>
         <div id="powerUpsGrid">
-          <div class="power-up-item" id="shield-buy" data-cost="100">
+          <div class="power-up-item" id="buy-shield">
             <div class="power-icon">🛡️</div>
-            <h3>מגן</h3>
-            <div class="power-price">100💰</div>
+            <h3>מגן (עד 3)</h3>
+            <div class="power-price">75💰</div>
+          </div>
+          <div class="power-up-item" id="buy-slow">
+            <div class="power-icon">⏱️</div>
+            <h3>מאט קצב (עד 3)</h3>
+            <div class="power-price">150💰</div>
           </div>
         </div>
         <button class="btn-back" id="backFromShop">← חזרה</button>
@@ -65,13 +70,24 @@
 
     <div id="gameScreen" class="screen" style="display:none; background: transparent;">
       <div class="game-header">
-        <div class="score-box" style="font-size: 20px;">LEVEL: <span id="levelText">1</span></div>
+        <div class="score-box">LEVEL: <span id="levelText">1</span></div>
         <div class="score-box">SCORE: <span id="score">0</span></div>
         <div class="score-box coins-inline">💰 <span id="coinsDisplay">0</span></div>
       </div>
+      
+      <!-- תצוגת יכולות פעילות -->
+      <div id="active-powers">
+        <span id="shield-count">🛡️ x0</span>
+        <span id="slow-count">⏱️ x0</span>
+      </div>
+
       <canvas id="game"></canvas>
+
       <div id="overlay">
         <div id="gameover">GAME OVER</div>
+        <div id="revive-section">
+            <button id="btnRevive" class="btn-main" style="background: #10b981;">❤️ קנה חיים (<span id="reviveCost">300</span>💰)</button>
+        </div>
         <input type="text" id="playerName" placeholder="שם שחקן" maxlength="12">
         <div class="menu-buttons">
             <button id="retry" class="btn-main">שחק שוב</button>
