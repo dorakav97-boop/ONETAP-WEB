@@ -87,7 +87,7 @@
 
   // Helpers
   function rectsOverlap(a, b) {
-    return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y + a.h < b.y + b.h);
+    return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h);
   }
 
   function spawnObstacle() {
@@ -187,76 +187,4 @@
   // Build skins UI
   function buildSkinsUI() {
     skinsList.innerHTML = '';
-    skins.forEach(s => {
-      const el = document.createElement('div');
-      el.className = 'skinCard';
-      el.title = s.label;
-      el.dataset.id = s.id;
-      el.style.background = s.color;
-      if (s.id === currentSkin) el.classList.add('selected');
-      el.addEventListener('click', () => {
-        currentSkin = s.id;
-        localStorage.setItem('game-skin', currentSkin);
-        document.querySelectorAll('.skinCard').forEach(x => x.classList.remove('selected'));
-        el.classList.add('selected');
-      });
-      skinsList.appendChild(el);
-    });
-  }
-
-  function updateHUD() {
-    scoreEl.textContent = 'ניקוד: ' + score;
-    coinsEl.textContent = 'מטבעות: ' + coins;
-    shieldStatusEl.textContent = shield.active ? 'מגן: פעיל' : 'מגן: אין';
-  }
-
-  function drawPlayer() {
-    const s = skins.find(x => x.id === currentSkin) || skins[0];
-    ctx.fillStyle = s.color;
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-    if (shield.active) {
-      ctx.strokeStyle = 'rgba(45,212,191,0.95)';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(player.x - 6, player.y - 6, player.w + 12, player.h + 12);
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = '#2dd4bf';
-      ctx.fillRect(player.x - 8, player.y - 8, player.w + 16, player.h + 16);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  // Main loop
-  function loop() {
-    if (!running) return;
-    tick++;
-    // clear
-    ctx.clearRect(0, 0, INTERNAL_W, INTERNAL_H);
-
-    // sky/background
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
-
-    // ground
-    ctx.fillStyle = '#374151';
-    ctx.fillRect(0, INTERNAL_H - 20, INTERNAL_W, 20);
-
-    // spawn obstacles
-    if (tick % Math.max(50, Math.floor(220 - score / 3)) === 0) {
-      spawnObstacle();
-    }
-    maybeSpawnCollectible();
-
-    // player input -> jump
-    if (spaceDown && player.onGround) {
-      player.vy = player.jumpPower;
-      player.onGround = false;
-      if (!muted && soundJump.src) soundJump.play().catch(()=>{});
-    }
-
-    // physics
-    player.vy += gravity;
-    player.y += player.vy;
-    if (player.y + player.h >= INTERNAL_H - 20) {
-      player.y = INTERNAL_H - 20 - player.h;
-      player.vy = 0;
-      player.onGround = true;
+    skins.forEa
