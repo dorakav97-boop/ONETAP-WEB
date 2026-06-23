@@ -12,7 +12,7 @@
   <div id="container">
     <div id="muteBtn">🔊</div>
 
-    <!-- מסכים -->
+    <!-- תפריט ראשי -->
     <div id="mainMenu" class="screen active-screen">
       <div class="menu-content">
         <h1 class="glow-text">OneTap MEGA</h1>
@@ -25,6 +25,7 @@
       </div>
     </div>
 
+    <!-- תפריט סקינים -->
     <div id="skinsMenu" class="screen">
       <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
@@ -34,14 +35,15 @@
           <div class="skin-option" id="skin-star">⭐</div>
           <div class="skin-option" id="skin-ufo">🛸</div>
         </div>
-        <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block;">
-          📷 העלה תמונה
+        <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block; height:60px; line-height:30px;">
+          📷 העלה תמונה מהגלריה
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
         </label>
         <button id="backFromSkins" class="btn-back">← חזרה</button>
       </div>
     </div>
 
+    <!-- תפריט חנות -->
     <div id="shopMenu" class="screen">
       <div class="menu-content">
         <h2>🛒 חנות</h2>
@@ -54,6 +56,7 @@
       </div>
     </div>
 
+    <!-- תפריט לוח תוצאות -->
     <div id="leaderboardMenu" class="screen">
       <div class="menu-content">
         <h2>🏆 TOP 5</h2>
@@ -62,6 +65,7 @@
       </div>
     </div>
 
+    <!-- מסך משחק -->
     <div id="gameScreen" class="screen">
       <div class="hud">
         <div class="box" id="lvlBox">Lvl: 1</div>
@@ -76,6 +80,13 @@
       <div id="overlay">
         <h2 id="go-text">GAME OVER</h2>
         <button id="btnRevive" class="btn" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
+        
+        <!-- כפתורי שיתוף -->
+        <div class="share-container">
+            <button id="shareWA" class="btn-share" style="background:#25D366;">WhatsApp 📱</button>
+            <button id="shareTG" class="btn-share" style="background:#0088cc;">Telegram ✈️</button>
+        </div>
+
         <input type="text" id="playerName" placeholder="שם שחקן">
         <button id="retry" class="btn">שחק שוב</button>
         <button id="homeBtn" class="btn-back">תפריט ראשי</button>
