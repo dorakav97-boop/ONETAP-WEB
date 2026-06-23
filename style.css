@@ -1,51 +1,62 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-html,body { height:100%; width:100%; font-family: Arial, sans-serif; background:#05080a; color:white; direction:rtl; overflow: hidden; }
+html,body { height:100%; width:100%; font-family: 'Arial Black', sans-serif; background:#05080a; color:white; direction:rtl; overflow: hidden; }
 #container { position:relative; height:100vh; width:100vw; }
 
-/* וידוא שהמסכים תמיד מעל הכל */
+/* מסכים */
 .screen { 
   position:absolute; 
   inset:0; 
-  display:flex; 
+  display:none; /* ישונה ל-flex ע"י ה-JS */
+  flex-direction: column;
   align-items:center; 
   justify-content:center; 
-  z-index: 100; /* גבוה מאוד */
-  background:#05080a;
+  z-index: 100; 
+  background: rgba(5, 8, 10, 0.95);
+  backdrop-filter: blur(10px);
 }
 
-.menu-content { text-align:center; width:90%; max-width:420px; z-index: 101; }
-h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+#mainMenu { display: flex; } /* מסך ראשון גלוי */
 
-.menu-buttons { display:flex; flex-direction:column; gap:15px; position: relative; z-index: 102; }
+.menu-content { text-align:center; width:90%; max-width:420px; }
+h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+.subtitle { opacity:0.7; margin-bottom:30px; font-size: 14px; }
 
-/* כפתורים גדולים ונוחים למגע */
+/* כפתורים */
+.menu-buttons { display:flex; flex-direction:column; gap:12px; width: 100%; }
 .btn-main, .btn-back {
-  padding:20px; 
-  border-radius:15px; 
-  font-size:20px; 
-  border:none; 
-  cursor:pointer; 
-  font-weight:800;
-  width: 100%;
-  display: block;
-  position: relative;
-  z-index: 105;
-  touch-action: manipulation;
+  padding:18px; border-radius:15px; font-size:18px; border:none; cursor:pointer; font-weight:900;
+  width: 100%; text-align: center; color: white; touch-action: manipulation;
+}
+.btn-main { background: linear-gradient(45deg,#06b6d4,#0891b2); box-shadow: 0 4px 15px rgba(6,182,212,0.3); }
+.btn-back { margin-top:15px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); }
+
+/* משחק */
+#gameScreen { background: transparent; }
+#game { display:block; width:100%; height:100vh; z-index: 1; }
+.game-header { 
+    position: absolute; top: 10px; width: 100%; display: flex; 
+    justify-content: space-around; z-index: 50; pointer-events: none; 
+}
+.score-box { background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; font-size: 24px; border: 1px solid #06b6d4; }
+
+/* סקינים וחנות */
+#skinsGrid, #powerUpsGrid { 
+    display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin: 20px 0; 
+}
+.skin-option, .power-up-item { 
+    background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; 
+    border: 2px solid transparent; cursor: pointer; text-align: center;
+}
+.skin-option.active { border-color: #06b6d4; background: rgba(6,182,212,0.2); }
+
+/* פופ-אפ הפסד */
+#overlay { 
+    position: absolute; inset:0; background:rgba(0,0,0,0.8); 
+    display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200; 
 }
 
-.btn-main { background:linear-gradient(45deg,#06b6d4,#0891b2); color:white; box-shadow:0 6px 20px rgba(6,182,212,0.3); }
-.btn-back { margin-top:15px; background:rgba(255,255,255,0.1); color:white; border:2px solid rgba(255,255,255,0.1); }
-
-/* הסתרת מסכים בצורה שלא תפריע */
-.screen[style*="display: none"] {
-  display: none !important;
-  pointer-events: none !important;
-  z-index: -1 !important;
+#muteBtn {
+    position: fixed; top: 20px; left: 20px; z-index: 1000;
+    font-size: 24px; background: rgba(0,0,0,0.5); border-radius: 50%; width: 45px; height: 45px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-
-#game { display:block; width:100%; height:100vh; background: #000; z-index: 1; position: absolute; top:0; left:0; }
-
-/* שיתוף */
-#shareWA, #shareTG { padding: 15px; border-radius: 12px; width: 100%; margin-top: 10px; border:none; color:white; font-weight:bold; font-size:18px; }
-#shareWA { background: #25D366; }
-#shareTG { background: #0088cc; }
