@@ -173,4 +173,135 @@ window.addEventListener('DOMContentLoaded', () => {
   // start game
   function start(){
     running = true; score = 0; level = 1; combo = 0; pipes = []; items = []; particles = []; player.trail = [];
-    player.y = H/2; player.vy = 0; player.has
+    player.y = H/2; player.vy = 0; player.hasShield = false;
+    currentSpeed = 3.5; spawnTimer = 0; lastTime = performance.now();
+    if (overlay) overlay.style.display = 'none';
+    if (mainMenu) mainMenu.style.display = 'none';
+    const gameScreen = document.getElementById('gameScreen');
+    if (gameScreen) gameScreen.style.display = 'flex';
+    if (scoreEl) scoreEl.textContent = "0";
+    if (levelDisp) levelDisp.textContent = level;
+    requestAnimationFrame(loop);
+  }
+
+  // loop
+  function loop(timestamp){
+    if (!running) return;
+    let dt = (timestamp - lastTime) * sloMo;
+    lastTime = timestamp;
+
+    // background
+    ctx.fillStyle = `hsl(${220 + level*8}, 30%, ${Math.max(6, 18 - score*0.08)}%)`;
+    ctx.fillRect(0,0,W,H);
+
+    // clouds
+    clouds.forEach(c=>{ c.x -= (currentSpeed*0.2 + c.s*currentSpeed) * sloMo; if (c.x < -c.r) c.x = W + c.r; ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); });
+
+    // speed
+    const lvlConf = getLevelConfig(level);
+    currentSpeed = 3.5 + (score*0.06) + lvlConf.speedBoost;
+
+    spawnTimer += dt;
+    if (spawnTimer > 1500){ spawnTimer = 0; spawnObject(); }
+
+    // physics
+    player.vy += gravity * sloMo; player.y += player.vy * sloMo; player.angle = player.vy * 0.08;
+    player.trail.push({ x: player.x, y: player.y }); if (player.trail.length > 8) player.trail.shift();
+
+    // draw trail
+    player.trail.forEach((t,i)=>{ ctx.globalAlpha = i/16; if (playerImg.complete) ctx.drawImage(playerImg, t.x-player.r, t.y-player.r, player.r*2, player.r*2); }); ctx.globalAlpha = 1;
+
+    // pipes
+    for (let i=pipes.length-1;i>=0;i--){
+      let p = pipes[i]; p.x -= currentSpeed * sloMo;
+      let yShift = Math.sin(timestamp/600 + p.offset) * p.move;
+      ctx.fillStyle = p.color; ctx.shadowBlur = 15; ctx.shadowColor = p.color;
+      ctx.fillRect(p.x, yShift, 60, p.topH); ctx.fillRect(p.x, p.botY + yShift, 60, H - p.botY - yShift); ctx.shadowBlur = 0;
+
+      if (!p.passed && p.x < player.x) {
+        p.passed = true; score++; combo++; let comboBonus = Math.floor(combo/5); score += comboBonus; if (scoreEl) scoreEl.textContent = score;
+        if (Math.abs(player.y - (p.topH + yShift)) < 15 || Math.abs(player.y - (p.botY + yShift)) < 15) { sloMo = 0.3; ctx.fillStyle = "white"; ctx.fillRect(0,0,W,H); setTimeout(()=>sloMo = 1, 150); }
+        if (score % 10 === 0) { level++; if (levelDisp) levelDisp.textContent = level; const l = document.createElement('div'); l.className = 'level-up'; l.textContent = "LEVEL " + level; document.body.appendChild(l); setTimeout(()=>l.remove(), 2000); }
+      }
+
+      // collision
+      if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
+        if (player.y - player.r < p.topH + yShift || player.y + player.r > p.botY + yShift) {
+          if (player.hasShield) { player.hasShield = false; createParticles(player.x, player.y, "#38bdf8", 20); pipes.splice(i,1); }
+          else return gameOver();
+        }
+      }
+      if (p.x < -100) pipes.splice(i,1);
+    }
+
+    // items (coins, shields)
+    for (let i=items.length-1;i>=0;i--){
+      const it = items[i];
+      it.x -= currentSpeed * sloMo;
+      let col = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
+      ctx.fillStyle = col; ctx.shadowBlur = 20; ctx.shadowColor = col; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+
+      if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
+        createParticles(it.x, it.y, col, 20);
+        if (it.type === 'shield') player.hasShield = true;
+        else if (it.type === 'coin') {
+          score += coinValue;
+          coinsOwned = (coinsOwned||0) + 1;
+          localStorage.setItem('onetap_coins', coinsOwned);
+          if (shopCoinsEl) shopCoinsEl.textContent = coinsOwned;
+          if (coinsDisplay) coinsDisplay.textContent = coinsOwned;
+          if (scoreEl) scoreEl.textContent = score;
+        }
+        items.splice(i,1);
+      }
+    }
+
+    // particles
+    for (let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+      ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 4, 4);
+      if (p.life <= 0) particles.splice(i,1);
+    }
+    ctx.globalAlpha = 1;
+
+    // out of bounds
+    if (player.y > H || player.y < 0) return gameOver();
+
+    // draw player
+    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle); ctx.beginPath(); ctx.arc(0,0,player.r,0,Math.PI*2); ctx.clip();
+    if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
+    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 6; ctx.stroke(); }
+    ctx.restore();
+
+    requestAnimationFrame(loop);
+  }
+
+  // gameOver + show controls
+  function gameOver(){
+    running = false;
+    document.body.classList.add('shake');
+    setTimeout(()=>document.body.classList.remove('shake'), 400);
+    if (overlay) overlay.style.display = 'flex';
+    if (shareWA) { shareWA.style.display = 'block'; shareWA.style.width = '260px'; }
+    if (shareTG) { shareTG.style.display = 'block'; shareTG.style.width = '260px'; }
+    const goEl = document.getElementById('gameover');
+    if (goEl) goEl.textContent = "SCORE: " + score;
+    if (scoresListOverlay) loadLeaderboard();
+    saveScore(playerNameInput ? playerNameInput.value : 'Player', score);
+    if (score > high) { high = score; localStorage.setItem('onetap_high', high); const highEl = document.getElementById('high'); if (highEl) highEl.textContent = "High: " + high; }
+  }
+
+  // sharing
+  if (shareWA) shareWA.addEventListener('click', () => {
+    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑 ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  });
+  if (shareTG) shareTG.addEventListener('click', () => {
+    let text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק של דור! מי עוקף? 👑`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+  });
+
+  // input handlers (click/touch)
+  const inputIds = ['playerName','retry','shareWA','shareTG','btnSkins','btnPlay','btnShop','btnLeaderboard','uploadSkinBtn'];
+  window
