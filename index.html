@@ -12,62 +12,57 @@
   <div id="container">
     <div id="muteBtn">🔊</div>
 
-    <!-- מסך תפריט -->
-    <div id="mainMenu" class="game-screen active">
-      <div class="content">
+    <!-- מסכי המשחק -->
+    <div id="mainMenu" class="screen active-screen">
+      <div class="menu-content">
         <h1>OneTap MEGA PRO</h1>
-        <p>משחק הטאפ האולטימטיבי</p>
-        <div class="btns">
-          <button id="btnSkins" class="b-main">🎨 סקינים</button>
-          <button id="btnPlay" class="b-main">🎮 התחל משחק</button>
-          <button id="btnLeaderboard" class="b-main">🏆 לוח תוצאות</button>
-          <button id="btnShop" class="b-main">🛒 חנות</button>
+        <div class="menu-buttons">
+          <button id="btnSkins" class="btn">🎨 סקינים</button>
+          <button id="btnPlay" class="btn">🎮 התחל משחק</button>
+          <button id="btnLeaderboard" class="btn">🏆 לוח תוצאות</button>
+          <button id="btnShop" class="btn">🛒 חנות</button>
         </div>
       </div>
     </div>
 
-    <!-- מסך סקינים -->
-    <div id="skinsMenu" class="game-screen">
-      <div class="content">
+    <div id="skinsMenu" class="screen">
+      <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
-        <div class="grid" id="skinsGrid">
-          <div class="sk-opt" id="skin-blue">🔵</div>
-          <div class="sk-opt" id="skin-fire">🔥</div>
-          <div class="sk-opt" id="skin-star">⭐</div>
-          <div class="sk-opt" id="skin-ufo">🛸</div>
+        <div id="skinsGrid">
+          <div class="skin-option" id="skin-blue">🔵</div>
+          <div class="skin-option" id="skin-fire">🔥</div>
+          <div class="skin-option" id="skin-star">⭐</div>
+          <div class="skin-option" id="skin-ufo">🛸</div>
         </div>
-        <label for="imageUpload" class="b-main" style="background:#8b5cf6;">
-          📷 העלה תמונה מהגלריה
+        <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block;">
+          📷 העלה תמונה
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
         </label>
-        <button id="backFromSkins" class="b-back">← חזרה</button>
+        <button id="backFromSkins" class="btn-back">← חזרה</button>
       </div>
     </div>
 
-    <!-- מסך חנות -->
-    <div id="shopMenu" class="game-screen">
-      <div class="content">
+    <div id="shopMenu" class="screen">
+      <div class="menu-content">
         <h2>🛒 חנות</h2>
         <p>💰 מטבעות: <span id="shopCoins">0</span></p>
-        <div class="grid">
-          <div class="sh-item" id="buy-shield">🛡️<br>מגן (75💰)</div>
-          <div class="sh-item" id="buy-slow">⏱️<br>האטה (150💰)</div>
+        <div id="powerUpsGrid">
+          <div class="power-item" id="buy-shield">🛡️<br>מגן (75💰)</div>
+          <div class="power-item" id="buy-slow">⏱️<br>האטה (150💰)</div>
         </div>
-        <button id="backFromShop" class="b-back">← חזרה</button>
+        <button id="backFromShop" class="btn-back">← חזרה</button>
       </div>
     </div>
 
-    <!-- מסך לוח תוצאות -->
-    <div id="leaderboardMenu" class="game-screen">
-      <div class="content">
+    <div id="leaderboardMenu" class="screen">
+      <div class="menu-content">
         <h2>🏆 TOP 5</h2>
-        <div id="scoresList" style="margin:20px 0;">טוען...</div>
-        <button id="backFromLeaderboard" class="b-back">← חזרה</button>
+        <div id="scoresList"></div>
+        <button id="backFromLeaderboard" class="btn-back">← חזרה</button>
       </div>
     </div>
 
-    <!-- מסך המשחק עצמו -->
-    <div id="gameScreen" class="game-screen" style="background:transparent;">
+    <div id="gameScreen" class="screen" style="background:transparent;">
       <div class="hud">
         <div class="box">LEVEL: <span id="levelText">1</span></div>
         <div class="box">SCORE: <span id="score">0</span></div>
@@ -79,11 +74,11 @@
       </div>
       <canvas id="game"></canvas>
       <div id="overlay">
-        <h2 id="gameover">GAME OVER</h2>
-        <button id="btnRevive" class="b-main" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
-        <input type="text" id="playerName" placeholder="שם שחקן" maxlength="12">
-        <button id="retry" class="b-main">שחק שוב</button>
-        <button id="homeBtn" class="b-back">תפריט ראשי</button>
+        <h2>GAME OVER</h2>
+        <button id="btnRevive" class="btn" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
+        <input type="text" id="playerName" placeholder="שם שחקן">
+        <button id="retry" class="btn">שחק שוב</button>
+        <button id="homeBtn" class="btn-back">תפריט ראשי</button>
       </div>
     </div>
   </div>
