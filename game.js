@@ -21,7 +21,6 @@ const scoreEl = document.getElementById('score'), overlay = document.getElementB
       scoresList = document.getElementById('scoresList'), shareWA = document.getElementById('shareWA'), 
       shareTG = document.getElementById('shareTG'), muteBtn = document.getElementById('mute-btn');
 
-const playerImg = new Image(); playerImg.src = 'me.png.JPG'; 
 const jumpSound = new Audio('jump.mp3.wav');
 let isMuted = false;
 
@@ -35,11 +34,12 @@ let currentSkinIdx = 0;
 const skins = ["🔥", "💎", "🌈", "⚡", "💀"];
 window.setSkin = (i) => { currentSkinIdx = i; document.querySelectorAll('.skin-item').forEach((b, idx) => b.classList.toggle('active', idx === i)); };
 
-let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false, trail: [] };
-let gravity = 0.4, jump = -7, pipes = [], items = [], particles = [], clouds = [], score = 0, running = false, 
-    currentSpeed = 3.5, spawnTimer = 0, lastTime = 0, level = 1, combo = 0, sloMo = 1;
+// --- פיזיקה מאתגרת (HARDCORE) ---
+let player = { x: 60, y: 0, r: 25, vy: 0, angle: 0, hasShield: false, trail: [] };
+let gravity = 0.45, jump = -7.5, pipes = [], items = [], stars = [], score = 0, running = false, 
+    currentSpeed = 3.5, spawnTimer = 0, lastTime = 0, level = 1, sloMo = 1;
 
-for(let i=0; i<10; i++) clouds.push({x: Math.random()*W, y: Math.random()*H, s: 0.1 + Math.random()*0.2, r: 20+Math.random()*40});
+for(let i=0; i<25; i++) stars.push({x: Math.random()*W, y: Math.random()*H, s: Math.random()*2});
 
 async function loadLeaderboard() {
     try {
@@ -53,16 +53,10 @@ async function loadLeaderboard() {
     } catch (e) { console.log(e); }
 }
 
-async function saveScore(name, s) {
-    if (s === 0) return;
-    await db.collection('scores').add({ name: name || "Legend", score: s, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-    loadLeaderboard();
-}
-
 function start() {
-    running = true; score = 0; level = 1; combo = 0; pipes = []; items = []; particles = []; player.trail = [];
+    running = true; score = 0; level = 1; pipes = []; items = [];
     player.y = H / 2; player.vy = 0; player.hasShield = false;
-    currentSpeed = 3.5; // המהירות שביקשת
+    currentSpeed = 3.5;
     scoreEl.textContent = "0"; overlay.style.display = 'none';
     shareWA.style.display = 'none'; shareTG.style.display = 'none';
     lastTime = performance.now();
@@ -70,12 +64,21 @@ function start() {
 }
 
 function spawnObject() {
-    let gap = Math.max(150, 260 - (score * 2.5));
+    // רווח מצטמצם (נהיה קשה מאוד מהר)
+    let gap = Math.max(138, 220 - (score * 1.4));
     let center = Math.random() * (H - gap - 120) + 60 + gap/2;
-    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed: false, color: `hsl(${score * 15 % 360}, 70%, 50%)` });
-    if (Math.random() > 0.7) {
-        let type = Math.random() > 0.9 ? 'shield' : 'coin';
-        items.push({ x: W + 100, y: center, r: 15, type: type });
+    
+    // המכשולים מתחילים לזוז מרמה 4 (30 נקודות)
+    let moveAmount = score >= 30 ? Math.min(110, (score - 30) * 3.5) : 0;
+
+    pipes.push({ 
+        x: W, topH: center-gap/2, botY: center+gap/2, done: false, 
+        color: `hsl(${score * 15 % 360}, 65%, 50%)`,
+        move: moveAmount, offset: Math.random() * Math.PI * 2
+    });
+
+    if (Math.random() > 0.8) {
+        items.push({ x: W + 100, y: center, r: 15, type: Math.random() > 0.9 ? 'shield' : 'coin' });
     }
 }
 
@@ -84,42 +87,36 @@ function loop(timestamp) {
     let dt = (timestamp - lastTime) * sloMo;
     lastTime = timestamp;
 
-    ctx.fillStyle = `hsl(${220 + level*10}, 30%, ${Math.max(5, 15 - score*0.1)}%)`;
-    ctx.fillRect(0, 0, W, H);
-
-    clouds.forEach(c => {
-        c.x -= currentSpeed * c.s * sloMo;
-        if (c.x < -c.r) c.x = W + c.r;
-        ctx.fillStyle = "rgba(255,255,255,0.03)";
-        ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
+    // רקע כחול עמוק (Space Blue)
+    ctx.fillStyle = "#0b1220"; ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    stars.forEach(s => {
+        s.x -= currentSpeed * 0.15 * sloMo;
+        if(s.x < 0) s.x = W;
+        ctx.fillRect(s.x, s.y, s.s, s.s);
     });
 
-    currentSpeed = 3.5 + (score * 0.08); // קצב העלייה שביקשת
+    currentSpeed = 3.5 + (score * 0.08); // קושי עולה קבוע
     spawnTimer += dt;
-    if (spawnTimer > 1500) { spawnTimer = 0; spawnObject(); }
+    if (spawnTimer > Math.max(750, 1500 - score * 12)) { spawnTimer = 0; spawnObject(); }
 
     player.vy += gravity * sloMo; player.y += player.vy * sloMo;
     player.angle = player.vy * 0.1;
 
-    player.trail.push({x: player.x, y: player.y});
-    if (player.trail.length > 6) player.trail.shift();
-    player.trail.forEach((t, i) => {
-        ctx.globalAlpha = i / 12;
-        ctx.font = "30px Arial";
-        ctx.fillText(skins[currentSkinIdx], t.x, t.y);
-    });
-    ctx.globalAlpha = 1;
-
     for (let i = pipes.length - 1; i >= 0; i--) {
         let p = pipes[i]; p.x -= currentSpeed * sloMo;
+        let yShift = p.move > 0 ? Math.sin(timestamp/550 + p.offset) * p.move : 0;
+
         ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, 0, 60, p.topH);
-        ctx.fillRect(p.x, p.botY, 60, H - p.botY);
+        ctx.fillRect(p.x, yShift, 60, p.topH);
+        ctx.fillRect(p.x, p.botY + yShift, 60, H - (p.botY + yShift));
 
         if (!p.done && p.x < player.x) { 
-            p.done = true; score++;
-            scoreEl.textContent = score;
-            if (Math.abs(player.y - p.topH) < 15 || Math.abs(player.y - p.botY) < 15) {
+            p.done = true; score++; scoreEl.textContent = score;
+            
+            // Slo-Mo בכמעט פסילה
+            if (Math.abs(player.y - (p.topH + yShift)) < 15 || Math.abs(player.y - (p.botY + yShift)) < 15) {
                 sloMo = 0.3; setTimeout(()=>sloMo = 1, 150);
             }
             if (score % 10 === 0) {
@@ -129,8 +126,9 @@ function loop(timestamp) {
                 setTimeout(()=>l.remove(), 2000);
             }
         }
+        
         if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
-            if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
+            if (player.y - player.r < p.topH + yShift || player.y + player.r > p.botY + yShift) {
                 if (player.hasShield) { player.hasShield = false; pipes.splice(i, 1); }
                 else gameOver();
             }
@@ -140,8 +138,8 @@ function loop(timestamp) {
 
     items.forEach((it, i) => {
         it.x -= currentSpeed * sloMo;
-        let col = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
+        ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
         if (Math.hypot(player.x-it.x, player.y-it.y) < player.r + it.r) {
             if (it.type === 'shield') player.hasShield = true;
             else score += 5;
@@ -154,20 +152,23 @@ function loop(timestamp) {
     ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
     ctx.font = "45px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(skins[currentSkinIdx], 0, 0);
-    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.strokeRect(-player.r, -player.r, player.r*2, player.r*2); }
+    if (player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0,30,0,7); ctx.stroke(); }
     ctx.restore();
 
     requestAnimationFrame(loop);
 }
 
 function gameOver() {
-    running = false; overlay.style.display = 'flex';
+    running = false; document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 400);
+    overlay.style.display = 'flex';
     shareWA.style.display = 'block'; shareTG.style.display = 'block';
-    document.getElementById('gameover').textContent = "SCORE: " + score;
-    saveScore(playerNameInput.value, score);
+    document.getElementById('gameover').textContent = "FINAL: " + score;
+    db.collection('scores').add({ name: playerNameInput.value || "Legend", score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    loadLeaderboard();
 }
 
-shareWA.onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent('הגעתי ל-'+score+' נקודות! עקפו אותי: '+window.location.href)}`, '_blank');
+shareWA.onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent('עשיתי '+score+' נקודות ב-MEGA ARENA! מי עוקף? 👑 '+window.location.href)}`, '_blank');
 shareTG.onclick = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent('הגעתי ל-'+score+' נקודות!')}`, '_blank');
 
 const inputIds = ['playerName','retry','shareWA','shareTG','mute-btn'];
