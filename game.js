@@ -55,7 +55,6 @@ window.addEventListener('load', () => {
         }
     };
 
-    // חיבור כפתורים
     bind('btnPlay', () => { showScreen('gameScreen'); start(); });
     bind('btnSkins', () => showScreen('skinsMenu'));
     bind('btnShop', () => { saveAndRefresh(); showScreen('shopMenu'); });
@@ -65,14 +64,12 @@ window.addEventListener('load', () => {
     bind('backFromLeaderboard', () => showScreen('mainMenu'));
     bind('homeBtn', () => { running = false; showScreen('mainMenu'); });
     
-    // תיקון כפתור Retry - עובד מיידית
     bind('retry', () => { 
         reviveCount = 0;
         document.getElementById('overlay').style.display = 'none';
         start(); 
     });
 
-    // תיקון כפתור מיוט
     bind('muteBtn', () => {
         muted = !muted;
         document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
@@ -80,9 +77,18 @@ window.addEventListener('load', () => {
     
     bind('buy-shield', () => { if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); } });
     bind('buy-slow', () => { if (coinsOwned >= 150 && slows < 3) { coinsOwned -= 150; slows++; saveAndRefresh(); } });
+    
+    // תיקון כפתור החייאה
     bind('btnRevive', () => {
         let cost = 300 + (reviveCount * 100);
-        if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
+        if (coinsOwned >= cost) {
+            coinsOwned -= cost;
+            reviveCount++;
+            saveAndRefresh();
+            revivePlayer();
+        } else {
+            alert("אין לך מספיק מטבעות להחייאה! (עלות: " + cost + ")");
+        }
     });
 
     function saveAndRefresh() {
@@ -124,8 +130,12 @@ window.addEventListener('load', () => {
     }
 
     function revivePlayer() { 
-        running = true; pipes = []; player.y = H / 2; player.vy = 0; 
+        running = true; 
+        pipes = []; // מנקה מכשולים קרובים
+        player.y = H / 2; 
+        player.vy = 0; 
         document.getElementById('overlay').style.display = 'none'; 
+        lastTime = performance.now(); // איפוס זמן כדי למנוע קפיצות
         requestAnimationFrame(loop); 
     }
 
@@ -207,11 +217,13 @@ window.addEventListener('load', () => {
     function gameOver() {
         running = false; 
         document.getElementById('overlay').style.display = 'flex';
+        let cost = 300 + (reviveCount * 100);
+        document.getElementById('reviveCost').textContent = cost;
         saveScore(score);
     }
 
     window.addEventListener('touchstart', (e) => { 
-        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
             player.vy = jump;
             if(!muted) jumpSound.play().catch(()=>{});
         }
