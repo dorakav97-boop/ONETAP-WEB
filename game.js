@@ -18,7 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // אלמנטים
   const canvas = document.getElementById('game'), ctx = canvas.getContext ? canvas.getContext('2d') : null;
   const scoreEl = document.getElementById('score'), levelDisp = document.getElementById('levelDisp');
-  const overlay = document.getElementById('overlay'), retryBtn = document.getElementById('retry');
+  const overlay = document.getElementById('overlay'), retryBtn = document.getElementById('retry'), homeBtn = document.getElementById('homeBtn');
   const playerNameInput = document.getElementById('playerName'), scoresList = document.getElementById('scoresList');
   const scoresListOverlay = document.getElementById('scoresListOverlay');
   const shareWA = document.getElementById('shareWA'), shareTG = document.getElementById('shareTG');
@@ -111,14 +111,4 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadLeaderboard(){
     if (!db) { if (scoresList) scoresList.innerHTML = '<p>DB לא זמין</p>'; if (scoresListOverlay) scoresListOverlay.innerHTML = '<p>DB לא זמין</p>'; return; }
     try{
-      const snap = await db.collection('scores').orderBy('score','desc').limit(5).get();
-      const medals = ['🥇','🥈','🥉','🏅','🏅'];
-      let html = '';
-      let overlayHtml = '';
-      let i=0;
-      snap.forEach(doc=>{
-        i++;
-        const d = doc.data();
-        const medal = medals[i-1] || '🏅';
-        html += `<div class="leaderboard-entry"><div class="rank">${medal}</div><div class="player-name">${escapeHtml(d.name||'---')}</div><div class="player-score">${d.score}</div></div>`;
-        overlayHtml += `<div class="leaderboard-entry"><div class="rank">${medal}</div><div class="player-name">${escapeHtml(d.name||'---')}</div><
+      const snap = await
