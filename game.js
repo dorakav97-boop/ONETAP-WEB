@@ -7,6 +7,8 @@ const firebaseConfig = {
   appId: "1:630792064093:web:3a7c53b696e86899b8",
   measurementId: "G-LM4P75B50D"
 };
+
+// אתחול Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -23,10 +25,17 @@ const scoreEl = document.getElementById('score'), overlay = document.getElementB
 const jumpSound = new Audio('jump.mp3.wav');
 let isMuted = false;
 
-muteBtn.onclick = (e) => { e.stopPropagation(); isMuted = !isMuted; muteBtn.textContent = isMuted ? "🔇" : "🔊"; };
+// פונקציית השתקה
+muteBtn.onclick = (e) => {
+    e.stopPropagation();
+    isMuted = !isMuted;
+    muteBtn.textContent = isMuted ? "🔇" : "🔊";
+};
 
 let currentSkinIdx = 0;
 const skins = ["🔥", "💎", "🌈", "⚡", "💀"];
+
+// בחירת סקין
 document.querySelectorAll('.skin-item').forEach((btn, i) => {
     btn.onclick = (e) => {
         e.stopPropagation();
@@ -36,23 +45,27 @@ document.querySelectorAll('.skin-item').forEach((btn, i) => {
     };
 });
 
-// HARDCORE SETTINGS
+// משתני משחק
 let player = { x: 70, y: 0, r: 24, vy: 0, hasShield: false };
-let pipes = [], items = [], stars = [], score = 0, running = false, lastTime = 0, speed = 3.5, level = 1;
+let pipes = [], items = [], stars = [], score = 0, running = false, lastTime = 0, speed = 3.5, level = 1, sloMo = 1;
 const gravity = 0.45, jump = -7.5;
 
 for(let i=0; i<40; i++) stars.push({x: Math.random()*W, y: Math.random()*H, s: Math.random()*2});
 
+// טעינת טבלת שיאים (מתוקן)
 async function loadLeaderboard() {
     try {
         const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
         let html = '';
-        snap.forEach((doc, i) => { 
+        snap.forEach((doc, i) => {
             const d = doc.data();
             html += `<div class="score-row"><span>${i===0?'👑':i+1+'.'} ${d.name}</span> <b>${d.score}</b></div>`;
         });
-        scoresList.innerHTML = html;
-    } catch (e) {}
+        scoresList.innerHTML = html || "No scores yet!";
+    } catch (e) {
+        console.error("Firebase Error:", e);
+        scoresList.innerHTML = "Error loading...";
+    }
 }
 
 function start() {
@@ -66,29 +79,29 @@ function start() {
 function spawn() {
     let gap = Math.max(135, 220 - (score * 1.5));
     let center = Math.random() * (H - gap - 160) + 80 + gap/2;
-    // מכשולים זזים מ-30 נקודות (רמה 4)
-    let move = score >= 30 ? Math.min(120, (score-30)*4) : 0;
+    let move = score >= 30 ? Math.min(110, (score-30)*4) : 0;
     pipes.push({ x: W, top: center-gap/2, bot: center+gap/2, done: false, color: `hsl(${score*12}, 60%, 50%)`, move: move, offset: Math.random()*10 });
     if (Math.random() > 0.8) items.push({ x: W + 100, y: center, type: Math.random() > 0.9 ? 'shield' : 'coin' });
 }
 
 function loop(t) {
     if (!running) return;
-    let dt = t - lastTime; lastTime = t;
+    let dt = (t - lastTime) * sloMo;
+    lastTime = t;
     if(dt > 100) dt = 16;
 
-    // Background - Blue Space
+    // Background
     ctx.fillStyle = "#0b1220"; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     stars.forEach(s => { s.x -= speed * 0.2; if(s.x < 0) s.x = W; ctx.fillRect(s.x, s.y, s.s, s.s); });
 
-    speed = 3.8 + (score * 0.09); // מהירות עולה מהר
+    speed = 3.8 + (score * 0.09);
     player.vy += gravity; player.y += player.vy;
 
     if (pipes.length === 0 || pipes[pipes.length-1].x < W - 280) spawn();
 
     for(let i=pipes.length-1; i>=0; i--) {
-        let p = pipes[i]; p.x -= speed;
+        let p = pipes[i]; p.x -= speed * sloMo;
         let yShift = p.move > 0 ? Math.sin(t/500 + p.offset) * p.move : 0;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, yShift, 60, p.top);
@@ -110,39 +123,41 @@ function loop(t) {
         if(p.x < -100) pipes.splice(i, 1);
     }
 
-    for(let i=items.length-1; i>=0; i--) {
-        let it = items[i]; it.x -= speed;
-        ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
-        ctx.beginPath(); ctx.arc(it.x, it.y, 15, 0, 7); ctx.fill();
-        if(Math.hypot(player.x-it.x, player.y-it.y) < player.r+15) {
-            if(it.type === 'shield') player.hasShield = true;
-            else score += 5;
-            items.splice(i, 1);
-        }
-        if(it.x < -50) items.splice(i, 1);
-    }
-
     if(player.y > H || player.y < 0) die();
 
     ctx.font = "45px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(skins[currentSkinIdx], player.x, player.y);
-    if(player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(player.x, player.y, 32, 0, 7); ctx.stroke(); }
     requestAnimationFrame(loop);
 }
 
 function die() {
-    running = false; overlay.style.display = 'flex';
-    if(score > 0) db.collection('scores').add({ name: playerNameInput.value || "Player", score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    running = false;
+    overlay.style.display = 'flex';
+    const finalName = playerNameInput.value || "Legend";
+    if(score > 0) {
+        db.collection('scores').add({ name: finalName, score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    }
     loadLeaderboard();
 }
 
-window.addEventListener('mousedown', (e) => { 
-    if(overlay.style.display === 'none') { player.vy = jump; if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); } }
+// לחיצות על המסך
+window.addEventListener('mousedown', (e) => {
+    if(overlay.style.display !== 'none') return;
+    player.vy = jump; if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
 });
-window.addEventListener('touchstart', (e) => { 
-    if(overlay.style.display === 'none') { e.preventDefault(); player.vy = jump; if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); } }
+window.addEventListener('touchstart', (e) => {
+    if(overlay.style.display !== 'none') return;
+    e.preventDefault();
+    player.vy = jump; if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
 }, { passive: false });
 
-startBtn.onclick = (e) => { e.stopPropagation(); start(); };
+// כפתור התחלה - לוודא שהוא מגיב
+startBtn.onclick = (e) => {
+    e.stopPropagation();
+    start();
+};
+
 playerNameInput.onclick = (e) => e.stopPropagation();
+
+// טעינה ראשונית
 loadLeaderboard();
