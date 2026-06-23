@@ -26,14 +26,13 @@ window.addEventListener('load', () => {
     let currentSpeed = BASE_SPEED;
     let gravity = 0.38, jump = -6.8;
     let muted = false;
-
     const jumpSound = new Audio('jump.mp3.wav');
 
     const stageConfigs = [
         { bg: "#05080a", pipe: "#06b6d4" },
         { bg: "#1a0b2e", pipe: "#d946ef" },
         { bg: "#062c43", pipe: "#0ea5e9" },
-        { bg: "#431407", pipe: "#f97316" },
+        { bg: "#431407", pipe: "#f97316" }, // שלב 4 - תנועה
         { bg: "#020617", pipe: "#ffffff" }
     ];
 
@@ -74,21 +73,23 @@ window.addEventListener('load', () => {
         muted = !muted;
         document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
     });
+
+    bind('shareWA', () => {
+        const text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק OneTap MEGA! מי עוקף אותי? 👑`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    });
+
+    bind('shareTG', () => {
+        const text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות במשחק OneTap MEGA! מי עוקף אותי? 👑`;
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+    });
     
     bind('buy-shield', () => { if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); } });
     bind('buy-slow', () => { if (coinsOwned >= 150 && slows < 3) { coinsOwned -= 150; slows++; saveAndRefresh(); } });
-    
-    // תיקון כפתור החייאה
     bind('btnRevive', () => {
         let cost = 300 + (reviveCount * 100);
-        if (coinsOwned >= cost) {
-            coinsOwned -= cost;
-            reviveCount++;
-            saveAndRefresh();
-            revivePlayer();
-        } else {
-            alert("אין לך מספיק מטבעות להחייאה! (עלות: " + cost + ")");
-        }
+        if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
+        else alert("אין מספיק מטבעות!");
     });
 
     function saveAndRefresh() {
@@ -130,12 +131,9 @@ window.addEventListener('load', () => {
     }
 
     function revivePlayer() { 
-        running = true; 
-        pipes = []; // מנקה מכשולים קרובים
-        player.y = H / 2; 
-        player.vy = 0; 
+        running = true; pipes = []; player.y = H / 2; player.vy = 0; 
         document.getElementById('overlay').style.display = 'none'; 
-        lastTime = performance.now(); // איפוס זמן כדי למנוע קפיצות
+        lastTime = performance.now();
         requestAnimationFrame(loop); 
     }
 
@@ -217,13 +215,11 @@ window.addEventListener('load', () => {
     function gameOver() {
         running = false; 
         document.getElementById('overlay').style.display = 'flex';
-        let cost = 300 + (reviveCount * 100);
-        document.getElementById('reviveCost').textContent = cost;
         saveScore(score);
     }
 
     window.addEventListener('touchstart', (e) => { 
-        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
             player.vy = jump;
             if(!muted) jumpSound.play().catch(()=>{});
         }
