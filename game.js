@@ -1,4 +1,5 @@
 window.addEventListener('load', () => {
+    // --- Firebase אתחול ---
     const firebaseConfig = {
         apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
         authDomain: "dor-akav-game.firebaseapp.com",
@@ -7,14 +8,23 @@ window.addEventListener('load', () => {
         messagingSenderId: "630792064093",
         appId: "1:630792064093:web:3a7c53b696e86899b8"
     };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    
+    // בדיקה בטוחה לטעינת Firebase בספארי
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let W, H;
-    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
+    
+    function resize() { 
+        W = canvas.width = window.innerWidth; 
+        H = canvas.height = window.innerHeight; 
+    }
+    window.addEventListener('resize', resize); 
+    resize();
 
     // משתני משחק
     let running = false, score = 0, level = 1, currentStage = 0;
@@ -24,11 +34,16 @@ window.addEventListener('load', () => {
     // יכולות (Power-ups)
     let shields = 0;
     let slows = 0;
-    let reviveCount = 0; // כמה פעמים נקנו חיים במשחק הנוכחי
+    let reviveCount = 0;
     
-    let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; // הגדלנו רדיוס ל-30
+    let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
     let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    let gravity = 0.3, jump = -6, speed = 2.5;
+    
+    // הגדרות מהירות
+    const BASE_SPEED = 2.8; 
+    let currentSpeed = BASE_SPEED;
+    let gravity = 0.32; 
+    let jump = -6.2;
     
     const stageConfigs = [
         { bg: "#05080a", pipe: "#06b6d4" },
@@ -43,24 +58,26 @@ window.addEventListener('load', () => {
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById(id).style.display = 'flex';
+        const overlay = document.getElementById('overlay');
+        if (overlay) overlay.style.display = 'none';
+        const target = document.getElementById(id);
+        if (target) target.style.display = 'flex';
     }
 
+    // פונקציית קישור מאובטחת לספארי
     const bind = (id, fn) => {
         const el = document.getElementById(id);
         if (el) {
-            el.onclick = (e) => { e.preventDefault(); fn(); };
-            el.ontouchstart = (e) => { e.preventDefault(); fn(); };
+            el.addEventListener('click', (e) => { e.preventDefault(); fn(); }, {passive: false});
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive: false});
         }
     };
 
-    // --- חנות ---
+    // --- חנות וניהול כספים ---
     bind('buy-shield', () => {
         if (coinsOwned >= 75 && shields < 3) {
             coinsOwned -= 75; shields++;
-            saveAndRefreschCoins();
-            updatePowerDisplay();
+            saveAndRefresh();
         } else if (shields >= 3) alert("מקסימום מגנים!");
         else alert("אין מספיק מטבעות!");
     });
@@ -68,8 +85,7 @@ window.addEventListener('load', () => {
     bind('buy-slow', () => {
         if (coinsOwned >= 150 && slows < 3) {
             coinsOwned -= 150; slows++;
-            saveAndRefreschCoins();
-            updatePowerDisplay();
+            saveAndRefresh();
         } else if (slows >= 3) alert("מקסימום מאט קצב!");
         else alert("אין מספיק מטבעות!");
     });
@@ -79,23 +95,24 @@ window.addEventListener('load', () => {
         if (coinsOwned >= cost) {
             coinsOwned -= cost;
             reviveCount++;
-            saveAndRefreschCoins();
+            saveAndRefresh();
             revivePlayer();
         } else alert("אין מספיק מטבעות!");
     });
 
-    function saveAndRefreschCoins() {
+    function saveAndRefresh() {
         localStorage.setItem('onetap_coins', coinsOwned);
-        document.getElementById('shopCoins').textContent = coinsOwned;
-        document.getElementById('coinsDisplay').textContent = coinsOwned;
+        if(document.getElementById('shopCoins')) document.getElementById('shopCoins').textContent = coinsOwned;
+        if(document.getElementById('coinsDisplay')) document.getElementById('coinsDisplay').textContent = coinsOwned;
+        updatePowerDisplay();
     }
 
     function updatePowerDisplay() {
-        document.getElementById('shield-count').textContent = `🛡️ x${shields}`;
-        document.getElementById('slow-count').textContent = `⏱️ x${slows}`;
+        if(document.getElementById('shield-count')) document.getElementById('shield-count').textContent = `🛡️ x${shields}`;
+        if(document.getElementById('slow-count')) document.getElementById('slow-count').textContent = `⏱️ x${slows}`;
     }
 
-    // העלאת תמונה
+    // --- סקינים ---
     const imageUpload = document.getElementById('imageUpload');
     bind('btnUpload', () => imageUpload.click());
     imageUpload.addEventListener('change', (e) => {
@@ -124,7 +141,7 @@ window.addEventListener('load', () => {
 
     bind('btnPlay', () => { showScreen('gameScreen'); start(); });
     bind('btnSkins', () => showScreen('skinsMenu'));
-    bind('btnShop', () => { document.getElementById('shopCoins').textContent = coinsOwned; showScreen('shopMenu'); });
+    bind('btnShop', () => { saveAndRefresh(); showScreen('shopMenu'); });
     bind('btnLeaderboard', () => { showScreen('leaderboardMenu'); loadLeaderboard(); });
     bind('backFromSkins', () => showScreen('mainMenu'));
     bind('backFromShop', () => showScreen('mainMenu'));
@@ -136,14 +153,15 @@ window.addEventListener('load', () => {
     function start() {
         running = true; score = 0; level = 1; currentStage = 0;
         pipes = []; items = []; player.y = H / 2; player.vy = 0;
-        speed = 2.5; spawnTimer = 2000;
-        updatePowerDisplay();
+        currentSpeed = BASE_SPEED; 
+        spawnTimer = 2000;
+        saveAndRefresh();
         requestAnimationFrame(loop);
     }
 
     function revivePlayer() {
         running = true;
-        pipes = []; // מנקים מכשולים כדי לתת צ'אנס
+        pipes = []; 
         player.y = H / 2; player.vy = 0;
         document.getElementById('overlay').style.display = 'none';
         requestAnimationFrame(loop);
@@ -151,25 +169,29 @@ window.addEventListener('load', () => {
 
     function loop(t) {
         if (!running) return;
-        let dt = t - lastTime; lastTime = t;
+        let dt = t - lastTime; 
+        if (dt > 100) dt = 16; // מניעת קפיצות בספארי
+        lastTime = t;
 
         // אפקט מאט קצב
-        let effectiveSpeed = (slows > 0) ? speed * 0.7 : speed;
+        let effectiveSpeed = (slows > 0) ? currentSpeed * 0.72 : currentSpeed;
 
         ctx.fillStyle = stageConfigs[currentStage].bg;
         ctx.fillRect(0, 0, W, H);
 
         spawnTimer += dt;
-        if (spawnTimer > 2500 - (effectiveSpeed * 100)) { 
+        if (spawnTimer > (2600 / (effectiveSpeed/2))) { 
             spawnTimer = 0; 
             spawnPipe(); 
         }
 
-        player.vy += gravity; player.y += player.vy;
-        player.angle = player.vy * 0.1;
+        player.vy += gravity; 
+        player.y += player.vy;
+        player.angle = player.vy * 0.08;
 
         ctx.save();
-        ctx.translate(player.x, player.y); ctx.rotate(player.angle);
+        ctx.translate(player.x, player.y); 
+        ctx.rotate(player.angle);
         if (shields > 0) {
             ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.arc(0,0,player.r + 8,0,Math.PI*2); ctx.stroke();
@@ -178,6 +200,7 @@ window.addEventListener('load', () => {
         if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
         ctx.restore();
 
+        // צינורות
         for (let i = pipes.length - 1; i >= 0; i--) {
             let p = pipes[i]; p.x -= effectiveSpeed;
             ctx.fillStyle = stageConfigs[currentStage].pipe;
@@ -185,8 +208,9 @@ window.addEventListener('load', () => {
             ctx.fillRect(p.x, p.botY, 80, H - p.botY);
 
             if (!p.passed && p.x < player.x) {
-                p.passed = true; score++; 
-                speed += 0.03;
+                p.passed = true; 
+                score++; 
+                currentSpeed += 0.04; // המהירות עולה בכל מכשול
                 if (score % 10 === 0) levelUp();
                 document.getElementById('score').textContent = score;
             }
@@ -194,7 +218,8 @@ window.addEventListener('load', () => {
             if (player.x + player.r > p.x && player.x - player.r < p.x + 80) {
                 if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
                     if (shields > 0) {
-                        shields--; updatePowerDisplay();
+                        shields--; 
+                        updatePowerDisplay();
                         pipes.splice(i, 1);
                     } else gameOver();
                 }
@@ -202,13 +227,16 @@ window.addEventListener('load', () => {
             if (p.x < -100) pipes.splice(i, 1);
         }
 
+        // מטבעות
         for (let i = items.length - 1; i >= 0; i--) {
             let it = items[i]; it.x -= effectiveSpeed;
             ctx.fillStyle = '#fbbf24';
             ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
+            
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coinsOwned += 3; speed += 0.06;
-                saveAndRefreschCoins();
+                coinsOwned += 3; 
+                currentSpeed += 0.08; // מטבע מעלה מהירות כפול ממכשול (0.04 * 2)
+                saveAndRefresh();
                 items.splice(i, 1);
             }
         }
@@ -224,10 +252,10 @@ window.addEventListener('load', () => {
     }
 
     function spawnPipe() {
-        let gap = 220 + (level * 2);
-        let center = Math.random() * (H - gap - 150) + 75 + gap/2;
+        let gap = 230 + (level * 2);
+        let center = Math.random() * (H - gap - 160) + 80 + gap/2;
         pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false });
-        if (Math.random() > 0.6) items.push({ x: W + 100, y: center, r: 15 });
+        if (Math.random() > 0.65) items.push({ x: W + 100, y: center, r: 16 });
     }
 
     function gameOver() {
@@ -236,21 +264,25 @@ window.addEventListener('load', () => {
         document.getElementById('gameover').textContent = "ניקוד: " + score;
         let nextReviveCost = 300 + (reviveCount * 100);
         document.getElementById('reviveCost').textContent = nextReviveCost;
-        saveScore(score);
+        if(db) saveScore(score);
     }
 
+    // מאזין קפיצה לאייפון
     window.addEventListener('touchstart', (e) => {
-        if (running && e.target.tagName !== 'BUTTON') player.vy = jump;
-    });
+        if (running && e.target.tagName !== 'BUTTON') {
+            player.vy = jump;
+        }
+    }, {passive: false});
 
     async function saveScore(s) {
         const name = document.getElementById('playerName').value || "שחקן";
-        if (s > 0) await db.collection('scores').add({ name, score: s, date: new Date() });
+        if (s > 0 && db) await db.collection('scores').add({ name, score: s, date: new Date() });
     }
 
     async function loadLeaderboard() {
         const list = document.getElementById('scoresList');
         list.innerHTML = "טוען...";
+        if(!db) return;
         const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
         let h = "";
         snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
