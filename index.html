@@ -12,6 +12,7 @@
   <div id="container">
     <div id="muteBtn" title="מוט/החזר סאונד">🔊</div>
 
+    <!-- Main Menu -->
     <div id="mainMenu" class="screen">
       <div class="menu-content">
         <h1>OneTap MEGA PRO</h1>
@@ -25,6 +26,7 @@
       </div>
     </div>
 
+    <!-- Skins Menu -->
     <div id="skinsMenu" class="screen" style="display:none;">
       <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
@@ -40,6 +42,7 @@
       </div>
     </div>
 
+    <!-- Shop Menu -->
     <div id="shopMenu" class="screen" style="display:none;">
       <div class="menu-content">
         <h2>🛒 חנות כוחות</h2>
@@ -48,13 +51,13 @@
           <div class="power-up-item" data-power="shield" data-cost="100">
             <div class="power-icon">🛡️</div>
             <h3>מגן</h3>
-            <p>הגן על עצמך מפגיעה אחת</p>
+            <p>מגן שיישמר למשחק הבא</p>
             <div class="power-price">100💰</div>
           </div>
           <div class="power-up-item" data-power="slow" data-cost="75">
             <div class="power-icon">⏱️</div>
             <h3>האט זמן</h3>
-            <p>האט למשך 3 שניות</p>
+            <p>האט זמן למשחק הבא</p>
             <div class="power-price">75💰</div>
           </div>
         </div>
@@ -62,18 +65,21 @@
       </div>
     </div>
 
+    <!-- Leaderboard Menu -->
     <div id="leaderboardMenu" class="screen" style="display:none;">
       <div class="menu-content">
-        <h2>🏆 לוח תוצאות</h2>
-        <div id="leaderboardList">טוען...</div>
+        <h2>🏆 לוח תוצאות - TOP 5</h2>
+        <div id="scoresList">טוען...</div>
         <button class="btn-back" id="backFromLeaderboard">← חזרה</button>
       </div>
     </div>
 
+    <!-- Game Screen -->
     <div id="gameScreen" class="screen" style="display:none;">
       <div class="game-header">
         <div class="score-display">נקודות: <span id="score">0</span></div>
         <div class="combo-display">שלב: <span id="levelDisp">1</span></div>
+        <div class="coins-inline">💰 <span id="coinsDisplay">0</span></div>
       </div>
       <canvas id="game"></canvas>
 
@@ -85,7 +91,7 @@
         <button id="shareTG" style="background: #0088cc; display:none;">Share to Telegram ✈️</button>
         <div id="leaderboard">
             <h3>🏆 WORLD LEADERS</h3>
-            <div id="scoresList">Loading...</div>
+            <div id="scoresListOverlay">Loading...</div>
         </div>
       </div>
     </div>
