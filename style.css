@@ -1,10 +1,76 @@
-/* ... אותן הגדרות קודמות ... */
-#active-powers {
-    position: absolute; top: 80px; left: 20px; display: flex; flex-direction: column; gap: 5px;
-    z-index: 50; font-size: 18px; font-weight: bold; color: #fff; text-shadow: 0 0 5px #000;
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html,body { 
+    height:100%; width:100%; font-family: 'Arial Black', sans-serif; 
+    background:#05080a !important; color:white; direction:rtl; overflow: hidden; 
+}
+#container { position:relative; height:100vh; width:100vw; background:#05080a; }
+
+.screen { 
+  position:absolute; inset:0; display:none; flex-direction: column;
+  align-items:center; justify-content:center; z-index: 100; 
+  background: #05080a;
 }
 
-#revive-section { width: 100%; display: flex; justify-content: center; margin-bottom: 10px; }
+#mainMenu { display: flex; }
 
-/* הגדלת הסקין ב-CSS לא משפיעה על הקנבס, נשנה את זה ב-JS, אבל נוודא שהתפריט יפה */
-.skin-option { font-size: 35px; width: 70px; height: 70px; }
+.menu-content { text-align:center; width:90%; max-width:420px; }
+h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+.subtitle { opacity:0.7; margin-bottom:30px; font-size: 14px; }
+
+.btn-main, .btn-back {
+  padding:18px; border-radius:15px; font-size:18px; border:none; cursor:pointer; font-weight:900;
+  width: 100%; text-align: center; color: white; touch-action: manipulation; margin-top: 10px;
+}
+.btn-main { background: linear-gradient(45deg,#06b6d4,#0891b2); box-shadow: 0 4px 15px rgba(6,182,212,0.3); }
+.btn-back { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); }
+
+.game-header { 
+    position: absolute; top: 15px; width: 100%; display: flex; 
+    justify-content: space-around; z-index: 50; pointer-events: none; 
+}
+.score-box { 
+    background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 12px; 
+    font-size: 22px; font-weight: 900; border: 2px solid #06b6d4; color: #fff;
+}
+.coins-inline { color: #fbbf24; border-color: #fbbf24; }
+
+#active-powers {
+    position: absolute; top: 80px; left: 20px; display: flex; flex-direction: column; gap: 5px;
+    z-index: 50; font-size: 18px; font-weight: bold; color: #fff;
+}
+
+#game { display:block; width:100%; height:100vh; z-index: 1; background: #000; }
+
+#skinsGrid, #powerUpsGrid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; margin: 20px 0; }
+.skin-option, .power-up-item { 
+    background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%; 
+    border: 2px solid transparent; cursor: pointer; text-align: center; font-size: 25px;
+    width: 65px; height: 65px; display: flex; align-items: center; justify-content: center;
+}
+.power-up-item { border-radius: 15px; width: 100%; height: auto; flex-direction: column; display: flex; }
+.skin-option.active { border-color: #06b6d4; background: rgba(6,182,212,0.2); }
+
+#overlay { 
+    position: absolute; inset:0; background:rgba(0,0,0,0.9); 
+    display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200; 
+}
+#gameover { font-size: 45px; margin-bottom: 20px; color: #ff4757; text-shadow: 0 0 15px #ff4757; }
+input { padding: 15px; border-radius: 10px; border: none; width: 80%; margin-bottom: 15px; text-align: center; font-size: 18px; background: white; color: black; }
+
+.level-banner {
+    position: absolute; top: 30%; width: 100%; text-align: center;
+    font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #06b6d4;
+    animation: levelUpAnim 2s forwards; z-index: 100; pointer-events: none;
+}
+@keyframes levelUpAnim {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; transform: scale(1.2); }
+    80% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: translateY(-100px); }
+}
+
+#muteBtn {
+    position: fixed; top: 20px; left: 20px; z-index: 1000;
+    font-size: 24px; cursor: pointer; width: 50px; height: 50px;
+    background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
