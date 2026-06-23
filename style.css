@@ -1,104 +1,51 @@
-* { margin:0; padding:0; box-sizing:border-box; }
-html,body { height:100%; width:100%; font-family: Arial, sans-serif; background:#05080a; color:white; direction:rtl; }
-#container { position:relative; height:100vh; width:100vw; overflow:hidden; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html,body { height:100%; width:100%; font-family: Arial, sans-serif; background:#05080a; color:white; direction:rtl; overflow: hidden; }
+#container { position:relative; height:100vh; width:100vw; }
 
-/* mute */
-#muteBtn {
-  position:fixed; top:18px; left:18px; z-index:1000;
-  width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  background: rgba(0,0,0,0.3); color:#06b6d4; font-size:24px; cursor:pointer; box-shadow:0 6px 18px rgba(6,182,212,0.12);
-  pointer-events: auto;
+/* וידוא שהמסכים תמיד מעל הכל */
+.screen { 
+  position:absolute; 
+  inset:0; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  z-index: 100; /* גבוה מאוד */
+  background:#05080a;
 }
 
-/* screens */
-.screen { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:10; pointer-events:auto; }
-.menu-content { text-align:center; width:90%; max-width:420px; padding:20px; }
+.menu-content { text-align:center; width:90%; max-width:420px; z-index: 101; }
 h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
-.subtitle { opacity:0.9; margin-bottom:20px; }
-.menu-buttons { display:flex; flex-direction:column; gap:12px; }
 
-/* buttons */
+.menu-buttons { display:flex; flex-direction:column; gap:15px; position: relative; z-index: 102; }
+
+/* כפתורים גדולים ונוחים למגע */
 .btn-main, .btn-back {
-  padding:18px 20px; border-radius:14px; font-size:18px; border:none; cursor:pointer; font-weight:800;
-  pointer-events: auto;
+  padding:20px; 
+  border-radius:15px; 
+  font-size:20px; 
+  border:none; 
+  cursor:pointer; 
+  font-weight:800;
+  width: 100%;
+  display: block;
+  position: relative;
+  z-index: 105;
+  touch-action: manipulation;
 }
-.btn-main { background:linear-gradient(45deg,#06b6d4,#0891b2); color:white; box-shadow:0 6px 18px rgba(6,182,212,0.14); }
-.btn-main:hover { transform:translateY(-4px); }
-.btn-back { margin-top:12px; background:rgba(255,255,255,0.06); color:white; border:2px solid rgba(255,255,255,0.06); }
 
-/* skins */
-#skinsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px; }
-.skin-option { padding:18px; border-radius:12px; background:rgba(255,255,255,0.04); cursor:pointer; font-weight:700; text-align:center; pointer-events:auto; }
-.skin-option.active { border:2px solid #06b6d4; box-shadow:0 0 18px rgba(6,182,212,0.12); background:rgba(6,182,212,0.06); }
-.upload-option { grid-column:1/-1; background:rgba(139,92,246,0.12); }
+.btn-main { background:linear-gradient(45deg,#06b6d4,#0891b2); color:white; box-shadow:0 6px 20px rgba(6,182,212,0.3); }
+.btn-back { margin-top:15px; background:rgba(255,255,255,0.1); color:white; border:2px solid rgba(255,255,255,0.1); }
 
-/* shop / leaderboard */
-.coins-display { font-size:18px; margin-bottom:12px; color:#fbbf24; }
-.power-up-item { padding:12px; border-radius:12px; background:rgba(255,255,255,0.03); margin-bottom:10px; cursor:pointer; pointer-events:auto; }
-.power-up-item.owned { border:2px solid #10b981; background:rgba(16,185,129,0.12); }
-.power-icon { font-size:28px; margin-bottom:6px; }
-
-/* game screen */
-#gameScreen { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; }
-.game-header { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; z-index:50; gap:10px; }
-.score-display {
-  font-size:34px;
-  background:rgba(0,0,0,0.35); padding:12px 18px; border-radius:12px; border:2px solid rgba(6,182,212,0.12);
-  box-shadow:0 6px 18px rgba(6,182,212,0.08);
-  pointer-events: none;
+/* הסתרת מסכים בצורה שלא תפריע */
+.screen[style*="display: none"] {
+  display: none !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
-.combo-display {
-  font-size:28px; color:#fbbf24; padding:10px 16px; border-radius:12px; background:rgba(0,0,0,0.25);
-  border:2px solid rgba(255,255,255,0.04);
-  pointer-events: none;
-}
-.coins-inline { font-size:20px; color:#fbbf24; pointer-events: none; }
 
-/* canvas - ensure it does not block UI */
-#game { display:block; width:100%; height:calc(100vh - 140px); background: linear-gradient(180deg,#071021,#00121a); z-index:5; position:relative; pointer-events:none; }
+#game { display:block; width:100%; height:100vh; background: #000; z-index: 1; position: absolute; top:0; left:0; }
 
-/* overlay (game over) */
-#overlay { position:absolute; inset:0; background:rgba(0,0,0,0.7); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:60; pointer-events:auto; }
-#gameover { font-size:36px; color:#fff; text-shadow:0 0 20px #06b6d4; }
-input[type="text"] { padding:12px; width:260px; border-radius:10px; border:2px solid #06b6d4; }
-
-/* share buttons - larger & styled */
-#shareWA, #shareTG {
-  padding: 14px 20px;
-  font-size: 18px;
-  border-radius: 12px;
-  width: 260px;
-  max-width: calc(100% - 40px);
-  display: inline-block;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-  cursor: pointer;
-  border: none;
-  color: #fff;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-  pointer-events: auto;
-}
+/* שיתוף */
+#shareWA, #shareTG { padding: 15px; border-radius: 12px; width: 100%; margin-top: 10px; border:none; color:white; font-weight:bold; font-size:18px; }
 #shareWA { background: #25D366; }
 #shareTG { background: #0088cc; }
-#shareWA:hover, #shareTG:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.45); }
-#shareWA:active, #shareTG:active { transform: translateY(0) scale(0.98); }
-
-/* leaderboard entries */
-.leaderboard-entry { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; margin-bottom:8px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03); }
-.leaderboard-entry .rank { font-size:20px; min-width:50px; text-align:center; }
-.leaderboard-entry .player-name { font-weight:700; flex:1; text-align:right; margin-right:8px; }
-.leaderboard-entry .player-score { font-weight:800; color:#fbbf24; min-width:60px; text-align:left; }
-
-/* level-up */
-.level-up { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:70px; font-weight:900; pointer-events:none; animation:levelAnim 2s forwards; text-shadow:0 0 30px #06b6d4; z-index:100; }
-@keyframes levelAnim { 0%{opacity:0; transform:translate(-50%,-50%) scale(0.6);} 20%{opacity:1; transform:translate(-50%,-50%) scale(1.2);} 80%{opacity:1; transform:translate(-50%,-50%) scale(1);} 100%{opacity:0; transform:translate(-50%,-200px); } }
-
-/* ensure hidden screens don't catch touches */
-.screen[style*="display:none"] { pointer-events: none !important; }
-
-/* larger tap area on mobile */
-@media (max-width:480px){
-  .btn-main { padding:20px; font-size:18px; }
-  #shareWA, #shareTG { width: 90%; font-size:18px; padding:16px; }
-  #game { height: calc(100vh - 180px); }
-}
