@@ -1,90 +1,55 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; width:100%; font-family: Arial, sans-serif; background:#05080a; color:white; direction:rtl; }
+#container { position:relative; height:100vh; width:100vw; overflow:hidden; }
 
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    overflow: hidden;
-    height: 100vh;
-    user-select: none;
-}
-
-#container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-}
-
-/* כפתור מיוט */
+/* mute */
 #muteBtn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    font-size: 30px;
-    color: #06b6d4;
-    text-shadow: 0 0 10px #06b6d4;
-    cursor: pointer;
-    transition: all 0.2s;
-    z-index: 1000;
-    pointer-events: all;
-    background: rgba(0,0,0,0.3);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position:fixed; top:18px; left:18px; z-index:1000;
+  width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.3); color:#06b6d4; font-size:24px; cursor:pointer; box-shadow:0 6px 18px rgba(6,182,212,0.12);
 }
 
-#muteBtn:hover {
-    transform: scale(1.2);
-    text-shadow: 0 0 20px #06b6d4;
+/* screens */
+.screen { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:10; }
+.menu-content { text-align:center; width:90%; max-width:420px; padding:20px; }
+h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+.subtitle { opacity:0.9; margin-bottom:20px; }
+.menu-buttons { display:flex; flex-direction:column; gap:12px; }
+.btn-main, .btn-back {
+  padding:14px; border-radius:12px; font-size:18px; border:none; cursor:pointer; font-weight:700;
 }
+.btn-main { background:linear-gradient(45deg,#06b6d4,#0891b2); color:white; box-shadow:0 6px 18px rgba(6,182,212,0.14); }
+.btn-main:hover { transform:translateY(-4px); }
+.btn-back { margin-top:12px; background:rgba(255,255,255,0.06); color:white; border:2px solid rgba(255,255,255,0.06); }
 
-/* מסכים כלליים */
-.screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* skins */
+#skinsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px; }
+.skin-option { padding:18px; border-radius:12px; background:rgba(255,255,255,0.04); cursor:pointer; font-weight:700; }
+.skin-option.active { border:2px solid #06b6d4; box-shadow:0 0 18px rgba(6,182,212,0.12); background:rgba(6,182,212,0.06); }
+.upload-option { grid-column:1/-1; background:rgba(139,92,246,0.12); }
+
+/* shop / leaderboard */
+.coins-display { font-size:18px; margin-bottom:12px; color:#fbbf24; }
+.power-up-item { padding:12px; border-radius:12px; background:rgba(255,255,255,0.03); margin-bottom:10px; }
+.power-icon { font-size:28px; margin-bottom:6px; }
+
+/* game screen */
+#gameScreen { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; }
+.game-header { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; z-index:50; }
+.score-display { font-size:20px; background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; }
+.combo-display { font-size:18px; color:#fbbf24; }
+
+/* canvas */
+#game { display:block; width:100%; height:calc(100vh - 140px); background: linear-gradient(180deg,#071021,#00121a); }
+
+/* overlay (game over) */
+#overlay { position:absolute; inset:0; background:rgba(0,0,0,0.7); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:60; }
+#gameover { font-size:36px; color:#fff; text-shadow:0 0 20px #06b6d4; }
+input[type="text"] { padding:12px; width:260px; border-radius:10px; border:2px solid #06b6d4; }
+button { outline:none; }
+
+/* small responsive */
+@media (max-width:480px){
+  h1 { font-size:28px; }
+  #game { height: calc(100vh - 160px); }
 }
-
-.menu-content {
-    text-align: center;
-    color: white;
-    max-width: 400px;
-    padding: 20px;
-}
-
-.menu-content h1 {
-    font-size: 3em;
-    margin-bottom: 10px;
-    text-shadow: 0 0 20px rgba(255,255,255,0.5);
-    background: linear-gradient(45deg, #06b6d4, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.menu-content h2 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    text-shadow: 0 0 15px rgba(255,255,255,0.5);
-}
-
-.subtitle {
-    font-size: 1.2em;
-    margin-bottom: 30px;
-    opacity: 0.8;
-}
-
-/* כפתורים */
-.menu-buttons {
-    display: flex;
-    flex-direction: 
