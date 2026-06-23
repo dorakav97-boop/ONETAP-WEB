@@ -1,236 +1,328 @@
-window.addEventListener('load', () => {
-    const firebaseConfig = {
-        apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
-        authDomain: "dor-akav-game.firebaseapp.com",
-        projectId: "dor-akav-game",
-        storageBucket: "dor-akav-game.firebasestorage.app",
-        messagingSenderId: "630792064093",
-        appId: "1:630792064093:web:3a7c53b696e86899b8"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    let W, H;
-    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
-
-    let running = false, score = 0, level = 1, currentStage = 0;
-    let coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
-    
-    // מלאי (Inventory)
-    let invShields = parseInt(localStorage.getItem('onetap_inv_shields') || '0');
-    let invSlows = parseInt(localStorage.getItem('onetap_inv_slows') || '0');
-    
-    // מצב פעיל במשחק
-    let shieldActive = false;
-    let slowTimer = 0; // זמן שנותר להאטה
-    let reviveCount = 0;
-    
-    let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
-    let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    const BASE_SPEED = 3.2; 
-    let currentSpeed = BASE_SPEED;
-    let gravity = 0.38, jump = -6.8;
-    let muted = false;
-    const jumpSound = new Audio('jump.mp3.wav');
-
-    const stageConfigs = [
-        { bg: "#05080a", pipe: "#06b6d4" },
-        { bg: "#1a0b2e", pipe: "#d946ef" },
-        { bg: "#062c43", pipe: "#0ea5e9" },
-        { bg: "#431407", pipe: "#f97316" }, 
-        { bg: "#020617", pipe: "#ffffff" }
-    ];
-
-    const playerImg = new Image();
-    playerImg.src = localStorage.getItem('onetap_custom_skin') || 'me.png.JPG';
-
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-        document.getElementById('overlay').style.display = 'none';
-        const target = document.getElementById(id);
-        if (target) target.classList.add('active-screen');
-    }
-
-    const bind = (id, fn) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); fn(); }, {passive: false});
-            el.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); fn(); });
-        }
-    };
-
-    // חנות - קנייה למלאי
-    bind('buy-shield', () => {
-        if (coinsOwned >= 75) {
-            coinsOwned -= 75; invShields++;
-            localStorage.setItem('onetap_inv_shields', invShields);
-            saveAndRefresh();
-        } else alert("אין מספיק מטבעות!");
+// Simple canvas runner with skins, rare collectible shield, share and Game Over overlay.
+// Copy this entire file to replace your existing game.js
+(() => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  // fixed internal resolution
+  const INTERNAL_W = 800;
+  const INTERNAL_H = 400;
+  canvas.width = INTERNAL_W;
+  canvas.height = INTERNAL_H;
+  // UI elems
+  const scoreEl = document.getElementById('score');
+  const coinsEl = document.getElementById('coins');
+  const shieldStatusEl = document.getElementById('shieldStatus');
+  const overlay = document.getElementById('overlay');
+  const finalScoreEl = document.getElementById('finalScore');
+  const btnRetry = document.getElementById('btnRetry');
+  const btnShareAfter = document.getElementById('btnShareAfter');
+  const btnWhatsapp = document.getElementById('shareWhatsapp');
+  const btnTelegram = document.getElementById('shareTelegram');
+  const btnSkins = document.getElementById('btnSkins');
+  const btnShop = document.getElementById('btnShop');
+  const panelSkins = document.getElementById('panelSkins');
+  const panelShop = document.getElementById('panelShop');
+  const skinsList = document.getElementById('skinsList');
+  const closeButtons = document.querySelectorAll('.closePanel');
+  const btnMute = document.getElementById('btnMute');
+  // State
+  let running = false;
+  let score = 0;
+  let coins = 0;
+  let speed = 3;
+  let gravity = 0.9;
+  let objects = [];
+  let collectibles = [];
+  let tick = 0;
+  let muted = false;
+  // Shield
+  let shield = {
+    active: false,
+    expiresAt: 0,
+    duration: 5000 // ms
+  };
+  // Skins
+  const skins = [
+    { id: 'default', label: 'ברירת מחדל', color: '#ffcc00' },
+    { id: 'blue', label: 'כחול', color: '#4f46e5' },
+    { id: 'green', label: 'ירוק', color: '#10b981' },
+    { id: 'red', label: 'אדום', color: '#ef4444' }
+  ];
+  let currentSkin = localStorage.getItem('game-skin') || 'default';
+  // Player
+  const player = {
+    x: 80,
+    y: INTERNAL_H - 70,
+    w: 40,
+    h: 40,
+    vy: 0,
+    onGround: true,
+    jumpPower: -13
+  };
+  // Input
+  let spaceDown = false;
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { spaceDown = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { spaceDown = false; }
+  });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); spaceDown = true; }, {passive:false});
+  window.addEventListener('touchend', e => { spaceDown = false; });
+  // Sounds (optional placeholders)
+  const soundJump = new Audio();
+  const soundCoin = new Audio();
+  const soundHit = new Audio();
+  soundJump.src = ''; // put actual paths if you have them in repo
+  soundCoin.src = '';
+  soundHit.src = '';
+  // Helpers
+  function rectsOverlap(a, b) {
+    return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h);
+  }
+  function spawnObstacle() {
+    const h = 24 + Math.random() * 56;
+    objects.push({
+      x: INTERNAL_W + 60,
+      y: INTERNAL_H - h - 20,
+      w: 20 + Math.random() * 40,
+      h: h
     });
-    bind('buy-slow', () => {
-        if (coinsOwned >= 150) {
-            coinsOwned -= 150; invSlows++;
-            localStorage.setItem('onetap_inv_slows', invSlows);
-            saveAndRefresh();
-        } else alert("אין מספיק מטבעות!");
+  }
+  // Very rare shield collectible
+  function maybeSpawnCollectible() {
+    // ~0.1% per frame at 60fps → very rare
+    if (Math.random() < 0.001) {
+      collectibles.push({
+        x: INTERNAL_W + 40,
+        y: INTERNAL_H - 120 - Math.random() * 140,
+        w: 20,
+        h: 20,
+        type: 'shield'
+      });
+    }
+  }
+  // Reset / Start / End
+  function startGame() {
+    running = true;
+    score = 0;
+    coins = 0;
+    speed = 3;
+    objects = [];
+    collectibles = [];
+    tick = 0;
+    shield.active = false;
+    shield.expiresAt = 0;
+    overlay.hidden = true;
+    player.y = INTERNAL_H - 70;
+    player.vy = 0;
+    player.onGround = true;
+    requestAnimationFrame(loop);
+  }
+  function gameOver() {
+    running = false;
+    overlay.hidden = false;
+    finalScoreEl.textContent = 'ניקוד: ' + score;
+  }
+  // Sharing
+  function openUrl(url) {
+    window.open(url, '_blank');
+  }
+  btnWhatsapp.addEventListener('click', () => {
+    const text = שיחקתי והגעתי ל־${score} נקודות!;
+    const link = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + window.location.href);
+    openUrl(link);
+  });
+  btnTelegram.addEventListener('click', () => {
+    const text = שיחקתי והגעתי ל־${score} נקודות!;
+    const link = 'https://t.me/share/url?url=' + encodeURIComponent(window.location.href) + '&text=' + encodeURIComponent(text);
+    openUrl(link);
+  });
+  btnShareAfter.addEventListener('click', () => {
+    const text = שיחקתי והגעתי ל־${score} נקודות!;
+    if (navigator.share) {
+      navigator.share({ title: 'תוצאה', text }).catch(()=>{});
+    } else {
+      const link = 'https://t.me/share/url?url=' + encodeURIComponent(window.location.href) + '&text=' + encodeURIComponent(text);
+      openUrl(link);
+    }
+  });
+  btnRetry.addEventListener('click', () => startGame());
+  // Mute toggle
+  btnMute.addEventListener('click', () => {
+    muted = !muted;
+    btnMute.textContent = muted ? 'קול: כבוי' : 'קול: מופעל';
+  });
+  btnMute.textContent = 'קול: מופעל';
+  // Panels
+  btnSkins.addEventListener('click', () => {
+    panelSkins.hidden = !panelSkins.hidden;
+    panelShop.hidden = true;
+  });
+  btnShop.addEventListener('click', () => {
+    panelShop.hidden = !panelShop.hidden;
+    panelSkins.hidden = true;
+  });
+  closeButtons.forEach(b => b.addEventListener('click', () => {
+    panelSkins.hidden = true; panelShop.hidden = true;
+  }));
+  // Build skins UI
+  function buildSkinsUI() {
+    skinsList.innerHTML = '';
+    skins.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'skinCard';
+      el.title = s.label;
+      el.dataset.id = s.id;
+      el.style.background = s.color;
+      if (s.id === currentSkin) el.classList.add('selected');
+      el.addEventListener('click', () => {
+        currentSkin = s.id;
+        localStorage.setItem('game-skin', currentSkin);
+        document.querySelectorAll('.skinCard').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+      skinsList.appendChild(el);
     });
-
-    // שימוש בכוחות בזמן משחק
-    bind('use-shield', () => {
-        if (invShields > 0 && !shieldActive && running) {
-            invShields--;
-            shieldActive = true;
-            localStorage.setItem('onetap_inv_shields', invShields);
-            saveAndRefresh();
-        }
-    });
-    bind('use-slow', () => {
-        if (invSlows > 0 && slowTimer <= 0 && running) {
-            invSlows--;
-            slowTimer = 400; // בערך 7 שניות של האטה
-            localStorage.setItem('onetap_inv_slows', invSlows);
-            saveAndRefresh();
-        }
-    });
-
-    bind('btnRevive', () => {
-        let cost = 300 + (reviveCount * 100);
-        if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
-        else alert("אין מספיק מטבעות!");
-    });
-
-    function saveAndRefresh() {
-        localStorage.setItem('onetap_coins', coinsOwned);
-        document.getElementById('shopCoins').textContent = coinsOwned;
-        document.getElementById('coinsDisplay').textContent = coinsOwned;
-        document.getElementById('lvlBox').textContent = "Lvl: " + level;
-        document.getElementById('scrBox').textContent = "Score: " + score;
-        document.getElementById('s-inv').textContent = invShields;
-        document.getElementById('w-inv').textContent = invSlows;
+  }
+  function updateHUD() {
+    scoreEl.textContent = 'ניקוד: ' + score;
+    coinsEl.textContent = 'מטבעות: ' + coins;
+    shieldStatusEl.textContent = shield.active ? 'מגן: פעיל' : 'מגן: אין';
+  }
+  function drawPlayer() {
+    const s = skins.find(x => x.id === currentSkin) || skins[0];
+    ctx.fillStyle = s.color;
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+    if (shield.active) {
+      ctx.strokeStyle = 'rgba(45,212,191,0.95)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(player.x - 6, player.y - 6, player.w + 12, player.h + 12);
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = '#2dd4bf';
+      ctx.fillRect(player.x - 8, player.y - 8, player.w + 16, player.h + 16);
+      ctx.globalAlpha = 1;
     }
+  }
+  // Main loop
+  function loop() {
+    if (!running) return;
+    tick++;
+    // clearו
+    ctx.clearRect(0, 0, INTERNAL_W, INTERNAL_H);
+      // sky/background
+ctx.fillStyle = '#87CEEB';
+ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
 
-    bind('shareWA', () => {
-        const text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות ב-OneTap MEGA! מי עוקף? 👑 ${window.location.href}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    });
+// ground
+ctx.fillStyle = '#374151';
+ctx.fillRect(0, INTERNAL_H - 20, INTERNAL_W, 20);
 
-    bind('shareTG', () => {
-        const text = `הגעתי ל-LEVEL ${level} עם ${score} נקודות ב-OneTap MEGA! מי עוקף? 👑`;
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
-    });
+// spawn obstacles
+if (tick % Math.max(50, Math.floor(220 - score / 3)) === 0) {
+  spawnObstacle();
+}
+maybeSpawnCollectible();
 
-    bind('btnPlay', () => { showScreen('gameScreen'); start(); });
-    bind('btnSkins', () => showScreen('skinsMenu'));
-    bind('btnShop', () => { saveAndRefresh(); showScreen('shopMenu'); });
-    bind('btnLeaderboard', () => { showScreen('leaderboardMenu'); loadLeaderboard(); });
-    bind('backFromSkins', () => showScreen('mainMenu'));
-    bind('backFromShop', () => showScreen('mainMenu'));
-    bind('backFromLeaderboard', () => showScreen('mainMenu'));
-    bind('homeBtn', () => { running = false; showScreen('mainMenu'); });
-    bind('retry', () => { reviveCount = 0; document.getElementById('overlay').style.display = 'none'; start(); });
-    bind('muteBtn', () => { muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; });
+// player input -> jump
+if (spaceDown && player.onGround) {
+  player.vy = player.jumpPower;
+  player.onGround = false;
+  if (!muted && soundJump.src) soundJump.play().catch(()=>{});
+}
 
-    function start() {
-        running = true; score = 0; level = 1; currentStage = 0; currentSpeed = BASE_SPEED;
-        pipes = []; items = []; player.y = H / 2; player.vy = 0;
-        shieldActive = false; slowTimer = 0;
-        spawnTimer = 2000; saveAndRefresh();
-        requestAnimationFrame(loop);
+// physics
+player.vy += gravity;
+player.y += player.vy;
+if (player.y + player.h >= INTERNAL_H - 20) {
+  player.y = INTERNAL_H - 20 - player.h;
+  player.vy = 0;
+  player.onGround = true;
+}
+
+// update objects
+for (let i = objects.length - 1; i >= 0; i--) {
+  const o = objects[i];
+  o.x -= speed;
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(o.x, o.y, o.w, o.h);
+
+  if (o.x + o.w < -60) objects.splice(i, 1);
+
+  if (rectsOverlap(player, o)) {
+    if (shield.active) {
+      shield.active = false;
+      shield.expiresAt = 0;
+      objects.splice(i, 1);
+      if (!muted && soundHit.src) soundHit.play().catch(()=>{});
+    } else {
+      if (!muted && soundHit.src) soundHit.play().catch(()=>{});
+      gameOver();
+      return;
     }
+  }
+}
 
-    function revivePlayer() { running = true; pipes = []; player.y = H / 2; player.vy = 0; document.getElementById('overlay').style.display = 'none'; lastTime = performance.now(); requestAnimationFrame(loop); }
+// update collectibles
+for (let i = collectibles.length - 1; i >= 0; i--) {
+  const c = collectibles[i];
+  c.x -= speed;
+  if (c.type === 'shield') {
+    // blue orb
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(c.x + c.w / 2, c.y + c.h / 2, c.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0369a1';
+    ctx.fillText('+', c.x + c.w/4, c.y + c.h/1.2);
+  } else {
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(c.x, c.y, c.w, c.h);
+  }
 
-    function loop(t) {
-        if (!running) return;
-        let dt = t - lastTime; if (dt > 100) dt = 16; lastTime = t;
-        
-        if (slowTimer > 0) slowTimer--;
-        let effSpeed = (slowTimer > 0) ? currentSpeed * 0.65 : currentSpeed;
-
-        ctx.fillStyle = stageConfigs[currentStage].bg;
-        ctx.fillRect(0, 0, W, H);
-
-        spawnTimer += dt;
-        if (spawnTimer > (3500 / (effSpeed/2))) { spawnTimer = 0; spawnPipe(); }
-
-        player.vy += gravity; player.y += player.vy;
-        player.angle = player.vy * 0.08;
-
-        ctx.save();
-        ctx.translate(player.x, player.y); ctx.rotate(player.angle);
-        if (shieldActive) { ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0,player.r + 8,0,Math.PI*2); ctx.stroke(); }
-        ctx.beginPath(); ctx.arc(0,0,player.r,0,Math.PI*2); ctx.clip();
-        if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
-        ctx.restore();
-
-        for (let i = pipes.length - 1; i >= 0; i--) {
-            let p = pipes[i]; p.x -= effSpeed;
-            if (currentStage >= 3) p.yOff = Math.sin(t / 400) * 100; else p.yOff = 0;
-            ctx.fillStyle = stageConfigs[currentStage].pipe;
-            ctx.fillRect(p.x, p.yOff, 85, p.topH); ctx.fillRect(p.x, p.botY + p.yOff, 85, H - p.botY);
-
-            if (!p.passed && p.x < player.x) {
-                p.passed = true; score++; currentSpeed += 0.12; 
-                if (score % 10 === 0) levelUp();
-                saveAndRefresh();
-            }
-
-            if (player.x + player.r > p.x && player.x - player.r < p.x + 85) {
-                if (player.y - player.r < p.topH + p.yOff || player.y + player.r > p.botY + p.yOff) {
-                    if (shieldActive) { shieldActive = false; saveAndRefresh(); pipes.splice(i, 1); }
-                    else gameOver();
-                }
-            }
-            if (p.x < -120) pipes.splice(i, 1);
-        }
-
-        for (let i = items.length - 1; i >= 0; i--) {
-            let it = items[i]; it.x -= effSpeed;
-            ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
-            if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coinsOwned += 3; score += 5; currentSpeed += 0.25; 
-                saveAndRefresh(); items.splice(i, 1);
-            }
-        }
-        if (player.y > H || player.y < 0) gameOver();
-        requestAnimationFrame(loop);
+  if (c.x + c.w < -60) collectibles.splice(i, 1);
+  else if (rectsOverlap(player, c)) {
+    if (c.type === 'shield') {
+      shield.active = true;
+      shield.expiresAt = Date.now() + shield.duration;
+    } else {
+      coins += 1;
     }
+    collectibles.splice(i, 1);
+    if (!muted && soundCoin.src) soundCoin.play().catch(()=>{});
+  }
+}
 
-    function levelUp() {
-        level++; currentStage = Math.min(Math.floor((level - 1) / 1), stageConfigs.length - 1);
-        const div = document.createElement('div');
-        div.className = 'lvl-up-anim'; div.textContent = "LEVEL UP!";
-        document.getElementById('gameScreen').appendChild(div);
-        setTimeout(() => div.remove(), 2000);
-    }
+// small random coins spawn
+if (Math.random() < 0.012) {
+  collectibles.push({
+    x: INTERNAL_W + 20,
+    y: INTERNAL_H - 60 - Math.random() * 80,
+    w: 12,
+    h: 12,
+    type: 'coin'
+  });
+}
 
-    function spawnPipe() {
-        let gap = 240 + (level * 2);
-        let center = Math.random() * (H - gap - 160) + 80 + gap/2;
-        pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false, yOff: 0 });
-        if (Math.random() > 0.65) items.push({ x: W + 100, y: center, r: 16 });
-    }
+// shield expiry
+if (shield.active && Date.now() > shield.expiresAt) {
+  shield.active = false;
+}
 
-    function gameOver() { running = false; document.getElementById('overlay').style.display = 'flex'; saveScore(score); }
+// draw player
+drawPlayer();
 
-    window.addEventListener('touchstart', (e) => { 
-        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && !e.target.classList.contains('power-btn')) {
-            player.vy = jump; if(!muted) jumpSound.play().catch(()=>{});
-        }
-    }, {passive: false});
+// score display
+ctx.fillStyle = '#ffffff';
+ctx.font = '18px sans-serif';
+ctx.fillText('ניקוד: ' + score, INTERNAL_W - 160, 30);
 
-    async function saveScore(s) {
-        const name = document.getElementById('playerName').value || "שחקן";
-        if (s > 0) await db.collection('scores').add({ name, score: s, date: new Date() });
-    }
+// increment score and difficulty
+if (tick % 10 === 0) {
+  score += 1;
+  if (score % 60 === 0) speed += 0.35;
+}
 
-    async function loadLeaderboard() {
-        const list = document.getElementById('scoresList'); list.innerHTML = "טוען...";
-        const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
-        let h = ""; snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
-        list.innerHTML = h || "אין תוצאות";
-    }
-});
+updateHUD();
+
+requestAnimationFrame(loop);
