@@ -12,15 +12,14 @@
   <div id="container">
     <div id="muteBtn">🔊</div>
 
-    <!-- מסכי המשחק -->
     <div id="mainMenu" class="screen active-screen">
       <div class="menu-content">
-        <h1>OneTap MEGA PRO</h1>
+        <h1 class="glow-text">OneTap MEGA</h1>
         <div class="menu-buttons">
-          <button id="btnSkins" class="btn">🎨 סקינים</button>
           <button id="btnPlay" class="btn">🎮 התחל משחק</button>
-          <button id="btnLeaderboard" class="btn">🏆 לוח תוצאות</button>
+          <button id="btnSkins" class="btn">🎨 סקינים</button>
           <button id="btnShop" class="btn">🛒 חנות</button>
+          <button id="btnLeaderboard" class="btn">🏆 לוח תוצאות</button>
         </div>
       </div>
     </div>
@@ -35,7 +34,7 @@
           <div class="skin-option" id="skin-ufo">🛸</div>
         </div>
         <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block;">
-          📷 העלה תמונה
+          📷 העלה תמונה מהגלריה
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
         </label>
         <button id="backFromSkins" class="btn-back">← חזרה</button>
@@ -64,8 +63,8 @@
 
     <div id="gameScreen" class="screen" style="background:transparent;">
       <div class="hud">
-        <div class="box">LEVEL: <span id="levelText">1</span></div>
-        <div class="box">SCORE: <span id="score">0</span></div>
+        <div class="box" id="lvlBox">Lvl: 1</div>
+        <div class="box" id="scrBox">Score: 0</div>
         <div class="box" style="color:#fbbf24">💰 <span id="coinsDisplay">0</span></div>
       </div>
       <div id="active-p">
@@ -74,7 +73,7 @@
       </div>
       <canvas id="game"></canvas>
       <div id="overlay">
-        <h2>GAME OVER</h2>
+        <h2 id="go-text">GAME OVER</h2>
         <button id="btnRevive" class="btn" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
         <input type="text" id="playerName" placeholder="שם שחקן">
         <button id="retry" class="btn">שחק שוב</button>
