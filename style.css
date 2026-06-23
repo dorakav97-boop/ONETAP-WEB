@@ -24,7 +24,7 @@ h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-
 
 /* skins */
 #skinsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px; }
-.skin-option { padding:18px; border-radius:12px; background:rgba(255,255,255,0.04); cursor:pointer; font-weight:700; }
+.skin-option { padding:18px; border-radius:12px; background:rgba(255,255,255,0.04); cursor:pointer; font-weight:700; text-align:center; }
 .skin-option.active { border:2px solid #06b6d4; box-shadow:0 0 18px rgba(6,182,212,0.12); background:rgba(6,182,212,0.06); }
 .upload-option { grid-column:1/-1; background:rgba(139,92,246,0.12); }
 
@@ -59,9 +59,9 @@ button { outline:none; color:white; }
 
 /* leaderboard entries */
 .leaderboard-entry { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; margin-bottom:8px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03); }
-.leaderboard-entry .rank { font-size:20px; min-width:50px; }
-.leaderboard-entry .player-name { font-weight:700; }
-.leaderboard-entry .player-score { font-weight:800; color:#fbbf24; }
+.leaderboard-entry .rank { font-size:20px; min-width:50px; text-align:center; }
+.leaderboard-entry .player-name { font-weight:700; flex:1; text-align:right; margin-right:8px; }
+.leaderboard-entry .player-score { font-weight:800; color:#fbbf24; min-width:60px; text-align:left; }
 
 /* level-up */
 .level-up { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:70px; font-weight:900; pointer-events:none; animation:levelAnim 2s forwards; text-shadow:0 0 30px #06b6d4; z-index:100; }
