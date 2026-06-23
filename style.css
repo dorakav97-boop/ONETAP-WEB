@@ -1,6 +1,265 @@
-/* ... הכל נשאר אותו דבר, רק הוספת עיצוב ללייבל העלאה ... */
+/* איפוס הגדרות ושיפור מגע באייפון */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+    user-select: none;
+}
+
+html, body { 
+    height: 100%; 
+    width: 100%; 
+    background-color: #05080a !important; 
+    color: white; 
+    direction: rtl; 
+    overflow: hidden;
+    position: fixed; /* מונע גלילה מציקה באייפון */
+    font-family: 'Arial Black', sans-serif;
+}
+
+#container { 
+    position: relative; 
+    width: 100%; 
+    height: 100%; 
+    background-color: #05080a; 
+}
+
+/* הגדרות מסכים */
+.screen { 
+    position: absolute; 
+    inset: 0; 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 100; 
+    background: #05080a; 
+}
+
+.active-screen { 
+    display: flex !important; 
+}
+
+.menu-content { 
+    text-align: center; 
+    width: 85%; 
+    max-width: 400px; 
+}
+
+h1 { 
+    font-size: 36px; 
+    background: linear-gradient(45deg, #06b6d4, #8b5cf6); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    margin-bottom: 10px; 
+}
+
+.subtitle { 
+    opacity: 0.7; 
+    margin-bottom: 30px; 
+    font-size: 14px; 
+}
+
+/* כפתורים */
+.btn-main, .btn-back {
+    padding: 16px; 
+    border-radius: 12px; 
+    font-size: 18px; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold;
+    width: 100%; 
+    text-align: center; 
+    color: white; 
+    margin-top: 10px;
+    transition: transform 0.1s;
+}
+
+.btn-main { 
+    background: linear-gradient(45deg, #06b6d4, #0891b2); 
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+}
+
+.btn-back { 
+    background: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.btn-main:active, .btn-back:active {
+    transform: scale(0.98);
+}
+
+/* כפתור העלאת תמונה מיוחד */
 label.btn-main {
+    display: block;
+    line-height: 30px; /* יישור הטקסט למרכז */
     cursor: pointer;
+}
+
+/* כותרת המשחק (ניקוד ושלב) */
+.game-header { 
+    position: absolute; 
+    top: 15px; 
+    width: 100%; 
+    display: flex; 
+    justify-content: space-around; 
+    z-index: 150; 
+    pointer-events: none; 
+}
+
+.score-box { 
+    background: rgba(0, 0, 0, 0.8); 
+    padding: 10px 15px; 
+    border-radius: 12px; 
+    font-size: 22px; 
+    font-weight: 900; 
+    border: 2px solid #06b6d4; 
+    color: #fff;
+    text-shadow: 0 0 10px #06b6d4;
+}
+
+/* יכולות פעילות בצד */
+#active-powers { 
+    position: absolute; 
+    top: 80px; 
+    left: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    z-index: 150; 
+    font-size: 18px; 
+    font-weight: bold;
+}
+
+/* קנבס המשחק */
+#game { 
+    display: block; 
+    width: 100%; 
+    height: 100%; 
+    background: #000; 
+    z-index: 1;
+}
+
+/* גריד סקינים וחנות */
+#skinsGrid, #powerUpsGrid { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 12px; 
+    width: 100%; 
+    margin: 20px 0; 
+}
+
+.skin-option, .power-up-item { 
+    background: rgba(255, 255, 255, 0.05); 
+    border-radius: 50%; 
+    border: 2px solid transparent; 
+    width: 65px; 
+    height: 65px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.power-up-item { 
+    border-radius: 15px; 
+    width: 100%; 
+    height: auto; 
+    flex-direction: column; 
+    padding: 12px; 
+    grid-template-columns: repeat(2, 1fr);
+}
+
+#powerUpsGrid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.skin-option.active { 
+    border-color: #06b6d4; 
+    background: rgba(6, 182, 212, 0.3); 
+    box-shadow: 0 0 15px #06b6d4;
+}
+
+/* מסך Game Over */
+#overlay { 
+    position: absolute; 
+    inset: 0; 
+    background: rgba(0, 0, 0, 0.9); 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 200; 
+}
+
+#gameover { 
+    font-size: 45px; 
+    color: #ff4757; 
+    margin-bottom: 20px; 
+    text-shadow: 0 0 20px #ff4757;
+}
+
+input { 
+    padding: 15px; 
+    border-radius: 12px; 
+    border: none; 
+    width: 80%; 
+    margin-bottom: 15px; 
+    text-align: center; 
+    font-size: 18px; 
+    background: white; 
+    color: black;
+}
+
+/* אנימציית עליה בשלב */
+.level-banner {
+    position: absolute; 
+    top: 35%; 
+    width: 100%; 
     text-align: center;
-    vertical-align: middle;
+    font-size: 50px; 
+    font-weight: 900; 
+    color: #fff; 
+    text-shadow: 0 0 25px #06b6d4;
+    animation: levelUpAnim 2.5s forwards; 
+    z-index: 100; 
+    pointer-events: none;
+}
+
+@keyframes levelUpAnim {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; transform: scale(1.2); }
+    80% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: translateY(-100px); }
+}
+
+/* כפתור מיוט */
+#muteBtn { 
+    position: fixed; 
+    top: 20px; 
+    left: 20px; 
+    z-index: 1000; 
+    font-size: 24px; 
+    width: 45px; 
+    height: 45px; 
+    background: rgba(0, 0, 0, 0.5); 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer;
+}
+
+/* רטט למסך בהפסד */
+.shake {
+    animation: shakeAnim 0.4s;
+}
+
+@keyframes shakeAnim {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    50% { transform: translateX(10px); }
+    75% { transform: translateX(-10px); }
 }
