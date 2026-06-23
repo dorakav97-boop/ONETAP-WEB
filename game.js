@@ -97,5 +97,80 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ניווט תפריטים (addEventListener)
-  if (btnSkins) btnSkins.addEventListener('click', ()=>{ if (mainMenu && skinsMenu){ mainMenu.style.display='none'; skinsMenu.style.disp
+  // addEventListener navigation
+  function bindMenuButtons(){
+    if (btnSkins) btnSkins.addEventListener('click', ()=>{ if (mainMenu && skinsMenu){ mainMenu.style.display='none'; skinsMenu.style.display='flex'; } });
+    if (backFromSkins) backFromSkins.addEventListener('click', ()=>{ if (skinsMenu && mainMenu){ skinsMenu.style.display='none'; mainMenu.style.display='flex'; } });
+    if (btnPlay) btnPlay.addEventListener('click', ()=>{ if (mainMenu){ mainMenu.style.display='none'; start(); } });
+    if (btnShop) btnShop.addEventListener('click', ()=>{ if (mainMenu && shopMenu){ mainMenu.style.display='none'; shopMenu.style.display='flex'; } });
+    if (backFromShop) backFromShop.addEventListener('click', ()=>{ if (shopMenu && mainMenu){ shopMenu.style.display='none'; mainMenu.style.display='flex'; } });
+    if (btnLeaderboard) btnLeaderboard.addEventListener('click', async ()=>{ if (mainMenu && leaderboardMenu){ mainMenu.style.display='none'; leaderboardMenu.style.display='flex'; await loadLeaderboard(); } });
+    if (backFromLeaderboard) backFromLeaderboard.addEventListener('click', ()=>{ if (leaderboardMenu && mainMenu){ leaderboardMenu.style.display='none'; mainMenu.style.display='flex'; } });
+  }
+  bindMenuButtons();
+
+  // leaderboard TOP5
+  function escapeHtml(str){ return String(str).replace(/[&<>"'`=\/]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#96;','=':'&#61;' }[s])); }
+  async function loadLeaderboard(){
+    if (!db) { if (scoresList) scoresList.innerHTML = '<p>DB לא זמין</p>'; if (scoresListOverlay) scoresListOverlay.innerHTML = '<p>DB לא זמין</p>'; return; }
+    try{
+      const snap = await db.collection('scores').orderBy('score','desc').limit(5).get();
+      const medals = ['🥇','🥈','🥉','🏅','🏅'];
+      let html = '';
+      let overlayHtml = '';
+      let i=0;
+      snap.forEach(doc=>{
+        i++;
+        const d = doc.data();
+        const medal = medals[i-1] || '🏅';
+        html += `<div class="leaderboard-entry"><div class="rank">${medal}</div><div class="player-name">${escapeHtml(d.name||'---')}</div><div class="player-score">${d.score}</div></div>`;
+        overlayHtml += `<div class="leaderboard-entry"><div class="rank">${medal}</div><div class="player-name">${escapeHtml(d.name||'---')}</div><div class="player-score">${d.score}</div></div>`;
+      });
+      if (scoresList) scoresList.innerHTML = html || '<p>אין תוצאות עדיין</p>';
+      if (scoresListOverlay) scoresListOverlay.innerHTML = overlayHtml || '<p>אין תוצאות עדיין</p>';
+    } catch(e){ console.error(e); if (scoresList) scoresList.innerHTML = '<p>שגיאה בטעינה</p>'; if (scoresListOverlay) scoresListOverlay.innerHTML = '<p>שגיאה בטעינה</p>'; }
+  }
+
+  async function saveScore(name, s){
+    if (!db) return;
+    if (s === 0) return;
+    try{ await db.collection('scores').add({ name: name||'Legend', score: s, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); loadLeaderboard(); }
+    catch(e){ console.error(e); }
+  }
+
+  // game core vars
+  let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0, hasShield: false, trail: [] };
+  let gravity = 0.45, jump = -8;
+  let pipes = [], items = [], particles = [], clouds = [], score = 0, running = false, currentSpeed = 3.5, spawnTimer = 0, lastTime = 0, level = 1, combo = 0, sloMo = 1;
+  let coinValue = 5; // points per coin
+
+  // init clouds
+  for (let i=0;i<8;i++) clouds.push({ x: Math.random()*window.innerWidth, y: Math.random()*(window.innerHeight-200), s: 0.08+Math.random()*0.25, r: 20+Math.random()*40 });
+
+  const LEVELS = [
+    { level:1, gap:220, speedBoost:0 },
+    { level:2, gap:190, speedBoost:0.5 },
+    { level:3, gap:160, speedBoost:1.2 },
+    { level:4, gap:140, speedBoost:2.0 },
+    { level:5, gap:120, speedBoost:3.0 }
+  ];
+  function getLevelConfig(l){ return LEVELS[Math.min(LEVELS.length-1, l-1)]; }
+
+  function spawnObject(){
+    const lvlConf = getLevelConfig(level);
+    let gap = Math.max(110, lvlConf.gap - score*0.5);
+    let center = Math.random()*(H - gap - 120) + 60 + gap/2;
+    let moveDist = level > 2 ? Math.min(120, (level-2)*25) : 0;
+    pipes.push({ x: W, topH: center-gap/2, botY: center+gap/2, passed:false, color:`hsl(${(score*18)%360},70%,50%)`, move: moveDist, offset: Math.random()*5 });
+    if (Math.random() > 0.65) {
+      let type = Math.random() > 0.9 ? 'shield' : 'coin';
+      items.push({ x: W + 100, y: center + (Math.random()-0.5)*80, r: 15, type: type });
+    }
+  }
+
+  function createParticles(x,y,color,count=12){ for (let i=0;i<count;i++) particles.push({ x:x, y:y, vx:(Math.random()-0.5)*8, vy:(Math.random()-0.5)*8, life:1.0, color:color }); }
+
+  // start game
+  function start(){
+    running = true; score = 0; level = 1; combo = 0; pipes = []; items = []; particles = []; player.trail = [];
+    player.y = H/2; player.vy = 0; player.has
