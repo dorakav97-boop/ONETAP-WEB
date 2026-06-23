@@ -8,37 +8,25 @@ window.addEventListener('load', () => {
         appId: "1:630792064093:web:3a7c53b696e86899b8"
     };
     
-    try {
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    } catch(e) { console.log("Firebase error"); }
-    
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let W, H;
     
-    function resize() { 
-        W = canvas.width = window.innerWidth; 
-        H = canvas.height = window.innerHeight; 
-    }
-    window.addEventListener('resize', resize); 
-    resize();
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
 
     let running = false, score = 0, level = 1, currentStage = 0;
     let coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
     let high = parseInt(localStorage.getItem('onetap_high') || '0');
-    
-    let shields = 0;
-    let slows = 0;
-    let reviveCount = 0;
-    
+    let shields = 0, slows = 0, reviveCount = 0;
     let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
     let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    
     const BASE_SPEED = 2.6; 
     let currentSpeed = BASE_SPEED;
-    let gravity = 0.32; 
-    let jump = -6.2;
+    let gravity = 0.32, jump = -6.2;
     
     const stageConfigs = [
         { bg: "#05080a", pipe: "#06b6d4" },
@@ -52,10 +40,10 @@ window.addEventListener('load', () => {
     playerImg.src = localStorage.getItem('onetap_custom_skin') || 'me.png.JPG';
 
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById('overlay').style.display = 'none';
         const target = document.getElementById(id);
-        if (target) target.style.display = 'flex';
+        if (target) target.classList.add('active-screen');
     }
 
     const bind = (id, fn) => {
@@ -67,29 +55,19 @@ window.addEventListener('load', () => {
     };
 
     bind('buy-shield', () => {
-        if (coinsOwned >= 75 && shields < 3) {
-            coinsOwned -= 75; shields++;
-            saveAndRefresh();
-        } else if (shields >= 3) alert("מקסימום מגנים!");
-        else alert("אין מספיק מטבעות!");
+        if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); }
+        else if (shields >= 3) alert("מקסימום מגנים!"); else alert("אין מטבעות!");
     });
 
     bind('buy-slow', () => {
-        if (coinsOwned >= 150 && slows < 3) {
-            coinsOwned -= 150; slows++;
-            saveAndRefresh();
-        } else if (slows >= 3) alert("מקסימום מאט קצב!");
-        else alert("אין מספיק מטבעות!");
+        if (coinsOwned >= 150 && slows < 3) { coinsOwned -= 150; slows++; saveAndRefresh(); }
+        else if (slows >= 3) alert("מקסימום האטה!"); else alert("אין מטבעות!");
     });
 
     bind('btnRevive', () => {
         let cost = 300 + (reviveCount * 100);
-        if (coinsOwned >= cost) {
-            coinsOwned -= cost;
-            reviveCount++;
-            saveAndRefresh();
-            revivePlayer();
-        } else alert("אין מספיק מטבעות!");
+        if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
+        else alert("אין מטבעות!");
     });
 
     function saveAndRefresh() {
@@ -110,11 +88,7 @@ window.addEventListener('load', () => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                playerImg.src = ev.target.result;
-                localStorage.setItem('onetap_custom_skin', ev.target.result);
-                alert("התמונה הועלתה!");
-            };
+            reader.onload = (ev) => { playerImg.src = ev.target.result; localStorage.setItem('onetap_custom_skin', ev.target.result); };
             reader.readAsDataURL(file);
         }
     });
@@ -128,6 +102,8 @@ window.addEventListener('load', () => {
             tCtx.fillText(opt.innerText, 35, 35);
             playerImg.src = tempCanvas.toDataURL();
             localStorage.setItem('onetap_custom_skin', playerImg.src);
+            document.querySelectorAll('.skin-option').forEach(s => s.classList.remove('active'));
+            opt.classList.add('active');
         });
     });
 
@@ -144,48 +120,34 @@ window.addEventListener('load', () => {
     function start() {
         running = true; score = 0; level = 1; currentStage = 0;
         pipes = []; items = []; player.y = H / 2; player.vy = 0;
-        currentSpeed = BASE_SPEED; 
-        spawnTimer = 2000;
+        currentSpeed = BASE_SPEED; spawnTimer = 2000;
         saveAndRefresh();
         requestAnimationFrame(loop);
     }
 
     function revivePlayer() {
-        running = true;
-        pipes = []; 
-        player.y = H / 2; player.vy = 0;
+        running = true; pipes = []; player.y = H / 2; player.vy = 0;
         document.getElementById('overlay').style.display = 'none';
         requestAnimationFrame(loop);
     }
 
     function loop(t) {
         if (!running) return;
-        let dt = t - lastTime; 
-        if (dt > 100) dt = 16;
-        lastTime = t;
-
+        let dt = t - lastTime; if (dt > 100) dt = 16; lastTime = t;
         let effectiveSpeed = (slows > 0) ? currentSpeed * 0.72 : currentSpeed;
 
         ctx.fillStyle = stageConfigs[currentStage].bg;
         ctx.fillRect(0, 0, W, H);
 
         spawnTimer += dt;
-        if (spawnTimer > (2800 / (effectiveSpeed/2))) { 
-            spawnTimer = 0; 
-            spawnPipe(); 
-        }
+        if (spawnTimer > (2800 / (effectiveSpeed/2))) { spawnTimer = 0; spawnPipe(); }
 
-        player.vy += gravity; 
-        player.y += player.vy;
+        player.vy += gravity; player.y += player.vy;
         player.angle = player.vy * 0.08;
 
         ctx.save();
-        ctx.translate(player.x, player.y); 
-        ctx.rotate(player.angle);
-        if (shields > 0) {
-            ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.arc(0,0,player.r + 8,0,Math.PI*2); ctx.stroke();
-        }
+        ctx.translate(player.x, player.y); ctx.rotate(player.angle);
+        if (shields > 0) { ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0,0,player.r + 8,0,Math.PI*2); ctx.stroke(); }
         ctx.beginPath(); ctx.arc(0,0,player.r,0,Math.PI*2); ctx.clip();
         if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
         ctx.restore();
@@ -193,24 +155,18 @@ window.addEventListener('load', () => {
         for (let i = pipes.length - 1; i >= 0; i--) {
             let p = pipes[i]; p.x -= effectiveSpeed;
             ctx.fillStyle = stageConfigs[currentStage].pipe;
-            ctx.fillRect(p.x, 0, 85, p.topH);
-            ctx.fillRect(p.x, p.botY, 85, H - p.botY);
+            ctx.fillRect(p.x, 0, 85, p.topH); ctx.fillRect(p.x, p.botY, 85, H - p.botY);
 
             if (!p.passed && p.x < player.x) {
-                p.passed = true; 
-                score++; 
-                currentSpeed += 0.04; 
+                p.passed = true; score++; currentSpeed += 0.04; 
                 if (score % 10 === 0) levelUp();
                 document.getElementById('score').textContent = score;
             }
 
             if (player.x + player.r > p.x && player.x - player.r < p.x + 85) {
                 if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
-                    if (shields > 0) {
-                        shields--; 
-                        updatePowerDisplay();
-                        pipes.splice(i, 1);
-                    } else gameOver();
+                    if (shields > 0) { shields--; updatePowerDisplay(); pipes.splice(i, 1); }
+                    else gameOver();
                 }
             }
             if (p.x < -120) pipes.splice(i, 1);
@@ -218,30 +174,18 @@ window.addEventListener('load', () => {
 
         for (let i = items.length - 1; i >= 0; i--) {
             let it = items[i]; it.x -= effectiveSpeed;
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
-            
+            ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coinsOwned += 3; 
-                currentSpeed += 0.08; 
-                saveAndRefresh();
-                items.splice(i, 1);
+                coinsOwned += 3; currentSpeed += 0.08; saveAndRefresh(); items.splice(i, 1);
             }
         }
-
         if (player.y > H || player.y < 0) gameOver();
         requestAnimationFrame(loop);
     }
 
     function levelUp() {
-        level++;
-        currentStage = Math.min(Math.floor((level - 1) / 2), stageConfigs.length - 1);
+        level++; currentStage = Math.min(Math.floor((level - 1) / 2), stageConfigs.length - 1);
         document.getElementById('levelText').textContent = level;
-        const banner = document.createElement('div');
-        banner.className = 'level-banner';
-        banner.textContent = "LEVEL UP! " + level;
-        document.body.appendChild(banner);
-        setTimeout(() => banner.remove(), 2000);
     }
 
     function spawnPipe() {
@@ -254,16 +198,14 @@ window.addEventListener('load', () => {
     function gameOver() {
         running = false;
         document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('gameover').textContent = "ניקוד: " + score;
-        let nextReviveCost = 300 + (reviveCount * 100);
-        document.getElementById('reviveCost').textContent = nextReviveCost;
+        document.getElementById('gameover').textContent = "SCORE: " + score;
+        let cost = 300 + (reviveCount * 100);
+        document.getElementById('reviveCost').textContent = cost;
         saveScore(score);
     }
 
     window.addEventListener('touchstart', (e) => {
-        if (running && e.target.tagName !== 'BUTTON') {
-            player.vy = jump;
-        }
+        if (running && e.target.tagName !== 'BUTTON') player.vy = jump;
     }, {passive: false});
 
     async function saveScore(s) {
@@ -274,11 +216,9 @@ window.addEventListener('load', () => {
     async function loadLeaderboard() {
         const list = document.getElementById('scoresList');
         list.innerHTML = "טוען...";
-        try {
-            const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
-            let h = "";
-            snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
-            list.innerHTML = h || "אין תוצאות";
-        } catch(e) { list.innerHTML = "שגיאה בטעינה"; }
+        const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
+        let h = "";
+        snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
+        list.innerHTML = h || "אין תוצאות";
     }
 });
