@@ -3,16 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>OneTap ARENA</title>
+  <title>OneTap MEGA ARENA</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <div id="ui"><p id="score">0</p></div>
+  <div id="ui">
+    <div id="score">0</div>
+    <div id="shieldStatus"></div>
+  </div>
   <canvas id="game"></canvas>
   <div id="overlay">
-    <div id="gameover">DOR'S ARENA</div>
+    <div id="gameover">MEGA ARENA</div>
     <div id="skin-shop">
         <button class="skin-item active" data-idx="0">🔥</button>
         <button class="skin-item" data-idx="1">💎</button>
@@ -23,7 +26,7 @@
     <input type="text" id="playerName" placeholder="Enter Nickname" maxlength="10">
     <button id="start-btn">START GAME</button>
     <div id="leaderboard">
-        <h3 style="color: #06b6d4; margin: 0 0 10px 0;">👑 WORLD LEGENDS</h3>
+        <h3 style="color:#06b6d4; margin:0 0 10px 0;">👑 WORLD LEGENDS</h3>
         <div id="scoresList">Loading scores...</div>
     </div>
   </div>
