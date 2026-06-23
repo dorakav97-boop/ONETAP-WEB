@@ -1,24 +1,27 @@
-body, html { margin: 0; padding: 0; overflow: hidden; background-color: #0b1220 !important; height: 100%; width: 100%; font-family: sans-serif; color: white; }
+body, html { margin: 0; padding: 0; overflow: hidden; background-color: #0b1220 !important; height: 100%; width: 100%; font-family: sans-serif; }
 #game { display: block; background-color: #0b1220; }
 
-#mute-btn { position: absolute; top: 20px; right: 20px; z-index: 1000; background: rgba(255,255,255,0.1); border: 1px solid white; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+/* כפתור השתקה */
+#mute-btn { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 50%; width: 45px; height: 45px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; }
 
-#ui { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+#ui { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; color: white; }
 #score { font-size: 50px; font-weight: bold; text-shadow: 0 0 15px #06b6d4; margin: 0; }
 
-#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 500; backdrop-filter: blur(5px); padding: 20px; }
-#gameover { font-size: 32px; font-weight: bold; color: #06b6d4; margin-bottom: 15px; text-transform: uppercase; }
+/* מסך הלובי */
+#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+#gameover { font-size: 32px; font-weight: bold; color: #06b6d4; margin-bottom: 20px; text-shadow: 0 0 10px #06b6d4; }
 
-/* תיקון שורת הסקינים */
-#skin-shop { display: flex; flex-direction: row; gap: 8px; margin-bottom: 20px; justify-content: center; width: 100%; }
-.skin-item { font-size: 24px; width: 50px; height: 50px; cursor: pointer; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; }
-.skin-item.active { background: rgba(6, 182, 212, 0.4); border: 2px solid #06b6d4; transform: scale(1.1); }
+/* חנות סקינים בשורה אחת */
+#skin-shop { display: flex; flex-direction: row; gap: 10px; margin-bottom: 20px; }
+.skin-item { font-size: 24px; width: 50px; height: 50px; cursor: pointer; border-radius: 12px; border: 2px solid transparent; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; transition: 0.2s; color: white; padding: 0; }
+.skin-item.active { border-color: #06b6d4; background: rgba(6, 182, 212, 0.4); transform: scale(1.1); }
 
-input { padding: 12px; border-radius: 10px; border: none; text-align: center; width: 220px; font-size: 16px; margin-bottom: 10px; outline: none; color: #000; }
-#start-btn { padding: 15px; width: 220px; font-size: 18px; font-weight: bold; border-radius: 10px; border: none; color: white; background: #06b6d4; cursor: pointer; z-index: 600; }
+input { padding: 15px; border-radius: 12px; border: none; text-align: center; width: 240px; font-size: 18px; margin-bottom: 12px; outline: none; background: white; color: black; }
+#start-btn { padding: 18px; width: 240px; font-size: 20px; font-weight: bold; border-radius: 12px; border: none; color: white; background: #06b6d4; cursor: pointer; box-shadow: 0 5px 15px rgba(6, 182, 212, 0.4); }
 
-#leaderboard { width: 260px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; text-align: center; margin-top: 15px; font-size: 14px; }
-.score-row { display: flex; justify-content: space-between; margin: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+/* טבלת שיאים */
+#leaderboard { width: 280px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; color: white; margin-top: 20px; }
+.score-row { display: flex; justify-content: space-between; margin: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; font-size: 16px; }
 
-.level-up { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 50px; font-weight: bold; animation: fadeUp 1.5s forwards; text-shadow: 0 0 20px #06b6d4; pointer-events: none; z-index: 1000; }
-@keyframes fadeUp { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -100px); } }
+.level-up { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 50px; font-weight: bold; animation: fadeUp 1.5s forwards; text-shadow: 0 0 20px #06b6d4; pointer-events: none; z-index: 1500; }
+@keyframes fadeUp { 0% { opacity:0; } 50% { opacity:1; } 100% { opacity:0; transform: translate(-50%, -100px); } }
