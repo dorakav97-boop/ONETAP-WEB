@@ -23,12 +23,13 @@ const scoreEl = document.getElementById('score'), shieldEl = document.getElement
 const jumpSound = new Audio('jump.mp3.wav');
 let isMuted = false;
 
-// Mute Toggle
-muteBtn.onclick = (e) => {
+// פונקציית השתקה מתוקנת
+muteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     isMuted = !isMuted;
     muteBtn.textContent = isMuted ? "🔇" : "🔊";
-};
+});
 
 let currentSkinIdx = 0;
 const skins = ["🔥", "💎", "🌈", "⚡", "💀"];
@@ -42,9 +43,9 @@ document.querySelectorAll('.skin-item').forEach((btn, i) => {
     };
 });
 
-// BALANCED SPEEDS - BACK TO FUN
+// SLOW AND FUN PHYSICS
 let player = { x: 80, y: 0, r: 24, vy: 0, hasShield: false };
-let pipes = [], items = [], stars = [], score = 0, running = false, lastTime = 0, speed = 2.8, level = 1;
+let pipes = [], items = [], stars = [], score = 0, running = false, lastTime = 0, speed = 2.5, level = 1;
 const gravity = 0.4, jump = -7;
 
 for(let i=0; i<30; i++) stars.push({x: Math.random()*W, y: Math.random()*H, s: Math.random()*2});
@@ -69,7 +70,8 @@ function showLevelMsg(txt) {
 
 function start() {
     running = true; score = 0; level = 1; pipes = []; items = [];
-    player.y = H/2; player.vy = 0; player.hasShield = false; speed = 2.8;
+    player.y = H/2; player.vy = 0; player.hasShield = false; 
+    speed = 2.5; // התחלה סופר איטית
     scoreEl.textContent = "0"; shieldEl.textContent = "";
     overlay.style.display = 'none';
     lastTime = performance.now();
@@ -77,9 +79,9 @@ function start() {
 }
 
 function spawnObject() {
-    let currentGap = Math.max(160, 240 - (score * 1.5));
+    let currentGap = Math.max(180, 240 - (score * 1.5));
     let center = Math.random() * (H - currentGap - 160) + 80 + currentGap/2;
-    pipes.push({ x: W, top: center - currentGap/2, bot: center + currentGap/2, done: false, color: `hsl(${score*10}, 60%, 50%)` });
+    pipes.push({ x: W, top: center - currentGap/2, bot: center + currentGap/2, done: false, color: `hsl(${score*5}, 60%, 50%)` });
     if (Math.random() > 0.8) {
         items.push({ x: W + 150, y: center, type: Math.random() > 0.9 ? 'shield' : 'coin' });
     }
@@ -93,17 +95,17 @@ function loop(t) {
     ctx.fillStyle = "#0b1220"; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "rgba(255,255,255,0.3)";
     stars.forEach(s => {
-        s.x -= speed * 0.2; if(s.x < 0) s.x = W;
+        s.x -= speed * 0.1; if(s.x < 0) s.x = W;
         ctx.fillRect(s.x, s.y, s.s, s.s);
     });
 
-    // Gentle difficulty curve
-    speed = 2.8 + (score * 0.04);
+    // מהירות עולה בצורה מזערית בלבד
+    speed = 2.5 + (score * 0.02);
 
     player.vy += gravity;
     player.y += player.vy;
 
-    if (pipes.length === 0 || pipes[pipes.length-1].x < W - 280) spawnObject();
+    if (pipes.length === 0 || pipes[pipes.length-1].x < W - 300) spawnObject();
 
     for(let i=pipes.length-1; i>=0; i--) {
         let p = pipes[i]; p.x -= speed;
@@ -127,7 +129,7 @@ function loop(t) {
         ctx.fillStyle = it.type === 'shield' ? '#38bdf8' : '#fbbf24';
         ctx.beginPath(); ctx.arc(it.x, it.y, 15, 0, 7); ctx.fill();
         if(Math.hypot(player.x-it.x, player.y-it.y) < player.r+15) {
-            if(it.type === 'shield') { player.hasShield = true; shieldEl.textContent = "🛡️ SHIELD"; }
+            if(it.type === 'shield') { player.hasShield = true; shieldEl.textContent = "🛡️ SHIELD ACTIVE"; }
             else { score += 5; scoreEl.textContent = score; }
             items.splice(i, 1);
         }
@@ -138,7 +140,7 @@ function loop(t) {
 
     ctx.font = "45px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(skins[currentSkinIdx], player.x, player.y);
-    if(player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(player.x, player.y, 32, 0, 7); ctx.stroke(); }
+    if(player.hasShield) { ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(player.x, player.y, 30, 0, 7); ctx.stroke(); }
     
     requestAnimationFrame(loop);
 }
@@ -150,13 +152,13 @@ function die() {
 }
 
 window.addEventListener('mousedown', (e) => { 
-    if(overlay.style.display === 'none') { 
+    if(overlay.style.display === 'none' && e.target.id !== 'mute-btn') { 
         player.vy = jump; 
         if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
     } 
 });
 window.addEventListener('touchstart', (e) => { 
-    if(overlay.style.display === 'none') { 
+    if(overlay.style.display === 'none' && e.target.id !== 'mute-btn') { 
         e.preventDefault(); player.vy = jump; 
         if(!isMuted) { jumpSound.currentTime = 0; jumpSound.play().catch(()=>{}); }
     } 
