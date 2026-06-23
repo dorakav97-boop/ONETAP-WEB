@@ -8,12 +8,6 @@ html,body { height:100%; width:100%; font-family: 'Arial Black', sans-serif; bac
   background: rgba(5, 8, 10, 0.95); backdrop-filter: blur(10px);
 }
 
-#mainMenu { display: flex; }
-
-.menu-content { text-align:center; width:90%; max-width:420px; }
-h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
-.subtitle { opacity:0.7; margin-bottom:30px; font-size: 14px; }
-
 .btn-main, .btn-back {
   padding:18px; border-radius:15px; font-size:18px; border:none; cursor:pointer; font-weight:900;
   width: 100%; text-align: center; color: white; touch-action: manipulation; margin-top: 10px;
@@ -22,41 +16,38 @@ h1 { font-size:40px; background:linear-gradient(45deg,#06b6d4,#8b5cf6); -webkit-
 .btn-back { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); }
 
 .game-header { 
-    position: absolute; top: 20px; width: 100%; display: flex; 
+    position: absolute; top: 15px; width: 100%; display: flex; 
     justify-content: space-around; z-index: 50; pointer-events: none; 
 }
 .score-box { 
-    background: rgba(0,0,0,0.6); padding: 12px 20px; border-radius: 15px; 
-    font-size: 28px; font-weight: 900; border: 2px solid #06b6d4; 
-    color: #fff; text-shadow: 0 0 10px #06b6d4;
+    background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 12px; 
+    font-size: 22px; font-weight: 900; border: 2px solid #06b6d4; color: #fff;
 }
-.coins-inline { color: #fbbf24; border-color: #fbbf24; text-shadow: 0 0 10px #fbbf24; }
 
 #game { display:block; width:100%; height:100vh; z-index: 1; }
 
-#skinsGrid, #powerUpsGrid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin: 20px 0; }
-.skin-option, .power-up-item { 
-    background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; 
-    border: 2px solid transparent; cursor: pointer; text-align: center; font-size: 30px;
+/* סקינים */
+#skinsGrid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; margin: 20px 0; }
+.skin-option { 
+    background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%; 
+    border: 2px solid transparent; cursor: pointer; text-align: center; font-size: 25px;
+    width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
 }
 .skin-option.active { border-color: #06b6d4; background: rgba(6,182,212,0.2); }
 
 #overlay { 
-    position: absolute; inset:0; background:rgba(0,0,0,0.85); 
+    position: absolute; inset:0; background:rgba(0,0,0,0.9); 
     display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200; 
 }
-#gameover { font-size: 45px; margin-bottom: 20px; color: #ff4757; text-shadow: 0 0 15px #ff4757; }
-input { padding: 15px; border-radius: 10px; border: none; width: 80%; margin-bottom: 15px; text-align: center; font-size: 18px; }
 
 .level-banner {
-    position: absolute; top: 120px; width: 100%; text-align: center;
-    font-size: 35px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #8b5cf6;
-    animation: fadeOut 2.5s forwards; z-index: 100; pointer-events: none;
+    position: absolute; top: 30%; width: 100%; text-align: center;
+    font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #06b6d4;
+    animation: levelUpAnim 2s forwards; z-index: 100; pointer-events: none;
 }
-@keyframes fadeOut { 0% {opacity: 0; transform: scale(0.8);} 20% {opacity: 1; transform: scale(1);} 80% {opacity: 1;} 100% {opacity: 0;} }
-
-#muteBtn {
-    position: fixed; top: 20px; left: 20px; z-index: 1000;
-    font-size: 24px; cursor: pointer; width: 50px; height: 50px;
-    background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+@keyframes levelUpAnim {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; transform: scale(1.2); }
+    80% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: translateY(-100px); }
 }
