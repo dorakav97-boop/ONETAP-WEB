@@ -52,7 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const jumpSound = new Audio('jump.mp3.wav'); jumpSound.volume = 0.9;
   let muted = false;
   if (muteBtn) {
-    muteBtn.onclick = () => { muted = !muted; jumpSound.muted = muted; muteBtn.textContent = muted ? '🔇' : '🔊'; };
+    muteBtn.addEventListener('click', () => { muted = !muted; jumpSound.muted = muted; muteBtn.textContent = muted ? '🔇' : '🔊'; });
   }
 
   // נתונים נשמרים
@@ -78,13 +78,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // העלאת סקין
   if (uploadSkinBtn && customSkinInput) {
-    uploadSkinBtn.onclick = () => customSkinInput.click();
-    customSkinInput.onchange = (e) => {
+    uploadSkinBtn.addEventListener('click', () => customSkinInput.click());
+    customSkinInput.addEventListener('change', (e) => {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader();
       r.onload = () => { customSkinDataUrl = r.result; localStorage.setItem('onetap_custom_skin', customSkinDataUrl); applySkin('custom'); document.querySelectorAll('.skin-option').forEach(s=>s.classList.remove('active')); uploadSkinBtn.classList.add('active'); };
       r.readAsDataURL(f);
-    };
+    });
   }
 
   // בחירת סקין UI
@@ -97,18 +97,5 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ניווט תפריטים
-  if (btnSkins) btnSkins.onclick = ()=>{ if (mainMenu && skinsMenu){ mainMenu.style.display='none'; skinsMenu.style.display='flex'; } };
-  if (backFromSkins) backFromSkins.onclick = ()=>{ if (skinsMenu && mainMenu){ skinsMenu.style.display='none'; mainMenu.style.display='flex'; } };
-  if (btnPlay) btnPlay.onclick = ()=>{ if (mainMenu){ mainMenu.style.display='none'; start(); } };
-  if (btnShop) btnShop.onclick = ()=>{ if (mainMenu && shopMenu){ mainMenu.style.display='none'; shopMenu.style.display='flex'; } };
-  if (backFromShop) backFromShop.onclick = ()=>{ if (shopMenu && mainMenu){ shopMenu.style.display='none'; mainMenu.style.display='flex'; } };
-  if (btnLeaderboard) btnLeaderboard.onclick = async ()=>{ if (mainMenu && leaderboardMenu){ mainMenu.style.display='none'; leaderboardMenu.style.display='flex'; await loadLeaderboard(); } };
-  if (backFromLeaderboard) backFromLeaderboard.onclick = ()=>{ if (leaderboardMenu && mainMenu){ leaderboardMenu.style.display='none'; mainMenu.style.display='flex'; } };
-
-  // leaderboard TOP5
-  function escapeHtml(str){ return String(str).replace(/[&<>"'`=\/]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#96;','=':'&#61;' }[s])); }
-  async function loadLeaderboard(){
-    if (!db) { if (scoresList) scoresList.innerHTML = '<p>DB לא זמין</p>'; if (scoresListOverlay) scoresListOverlay.innerHTML = '<p>DB לא זמין</p>'; return; }
-    try{
-      const snap = await
+  // ניווט תפריטים (addEventListener)
+  if (btnSkins) btnSkins.addEventListener('click', ()=>{ if (mainMenu && skinsMenu){ mainMenu.style.display='none'; skinsMenu.style.disp
