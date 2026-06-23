@@ -22,9 +22,11 @@ window.addEventListener('load', () => {
     let coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
     let high = parseInt(localStorage.getItem('onetap_high') || '0');
     let shields = 0, slows = 0, reviveCount = 0;
+    
     let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
     let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    const BASE_SPEED = 2.6; 
+    
+    const BASE_SPEED = 2.4; // התחלה קצת יותר איטית
     let currentSpeed = BASE_SPEED;
     let gravity = 0.32, jump = -6.2;
     
@@ -37,7 +39,9 @@ window.addEventListener('load', () => {
     ];
 
     const playerImg = new Image();
-    playerImg.src = localStorage.getItem('onetap_custom_skin') || 'me.png.JPG';
+    // טעינת סקין שמור או תמונה דיפולטיבית
+    const savedSkin = localStorage.getItem('onetap_custom_skin');
+    playerImg.src = savedSkin || 'me.png.JPG';
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -54,6 +58,7 @@ window.addEventListener('load', () => {
         }
     };
 
+    // --- חנות ---
     bind('buy-shield', () => {
         if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); }
         else if (shields >= 3) alert("מקסימום מגנים!"); else alert("אין מטבעות!");
@@ -74,6 +79,7 @@ window.addEventListener('load', () => {
         localStorage.setItem('onetap_coins', coinsOwned);
         document.getElementById('shopCoins').textContent = coinsOwned;
         document.getElementById('coinsDisplay').textContent = coinsOwned;
+        document.getElementById('score').textContent = score;
         updatePowerDisplay();
     }
 
@@ -82,13 +88,21 @@ window.addEventListener('load', () => {
         document.getElementById('slow-count').textContent = `⏱️ x${slows}`;
     }
 
+    // --- תיקון העלאת תמונה לאייפון ---
     const imageUpload = document.getElementById('imageUpload');
-    bind('btnUpload', () => imageUpload.click());
-    imageUpload.addEventListener('change', (e) => {
+    imageUpload.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (ev) => { playerImg.src = ev.target.result; localStorage.setItem('onetap_custom_skin', ev.target.result); };
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    playerImg.src = ev.target.result;
+                    localStorage.setItem('onetap_custom_skin', ev.target.result);
+                    alert("הסקין עודכן בהצלחה!");
+                };
+                img.src = ev.target.result;
+            };
             reader.readAsDataURL(file);
         }
     });
@@ -100,8 +114,9 @@ window.addEventListener('load', () => {
             const tCtx = tempCanvas.getContext('2d');
             tCtx.font = '50px serif'; tCtx.textAlign = 'center'; tCtx.textBaseline = 'middle';
             tCtx.fillText(opt.innerText, 35, 35);
-            playerImg.src = tempCanvas.toDataURL();
-            localStorage.setItem('onetap_custom_skin', playerImg.src);
+            const dataUrl = tempCanvas.toDataURL();
+            playerImg.src = dataUrl;
+            localStorage.setItem('onetap_custom_skin', dataUrl);
             document.querySelectorAll('.skin-option').forEach(s => s.classList.remove('active'));
             opt.classList.add('active');
         });
@@ -158,7 +173,8 @@ window.addEventListener('load', () => {
             ctx.fillRect(p.x, 0, 85, p.topH); ctx.fillRect(p.x, p.botY, 85, H - p.botY);
 
             if (!p.passed && p.x < player.x) {
-                p.passed = true; score++; currentSpeed += 0.04; 
+                p.passed = true; score++; 
+                currentSpeed += 0.03; // מהירות עולה במעט בכל מכשול
                 if (score % 10 === 0) levelUp();
                 document.getElementById('score').textContent = score;
             }
@@ -176,7 +192,10 @@ window.addEventListener('load', () => {
             let it = items[i]; it.x -= effectiveSpeed;
             ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coinsOwned += 3; currentSpeed += 0.08; saveAndRefresh(); items.splice(i, 1);
+                coinsOwned += 3; 
+                score += 5; // כל מטבע מוסיף 5 נקודות
+                currentSpeed += 0.06; // מטבע מעלה קצב כמו 2 מכשולים (0.03 * 2)
+                saveAndRefresh(); items.splice(i, 1);
             }
         }
         if (player.y > H || player.y < 0) gameOver();
@@ -189,7 +208,7 @@ window.addEventListener('load', () => {
     }
 
     function spawnPipe() {
-        let gap = 240 + (level * 2);
+        let gap = 245 + (level * 2);
         let center = Math.random() * (H - gap - 160) + 80 + gap/2;
         pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false });
         if (Math.random() > 0.65) items.push({ x: W + 100, y: center, r: 16 });
@@ -205,7 +224,9 @@ window.addEventListener('load', () => {
     }
 
     window.addEventListener('touchstart', (e) => {
-        if (running && e.target.tagName !== 'BUTTON') player.vy = jump;
+        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+            player.vy = jump;
+        }
     }, {passive: false});
 
     async function saveScore(s) {
