@@ -1,25 +1,15 @@
-body, html { 
-  margin: 0; 
-  padding: 0; 
-  overflow: hidden; 
-  background-color: #0b1220 !important; /* כחול לילה עמוק */
-  height: 100%; 
-  width: 100%; 
-  font-family: sans-serif; 
-}
+body, html { margin: 0; padding: 0; overflow: hidden; background-color: #0b1220 !important; height: 100%; width: 100%; font-family: sans-serif; color: white; }
 #game { display: block; background-color: #0b1220; }
-#ui { position: absolute; top: 20px; left: 20px; color: white; z-index: 10; pointer-events: none; }
-#score { font-size: 50px; font-weight: bold; }
+#ui { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+#score { font-size: 50px; font-weight: bold; text-shadow: 0 0 15px #06b6d4; margin: 0; }
+#shieldStatus { color: #38bdf8; font-weight: bold; font-size: 16px; }
 
-#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-#gameover { font-size: 35px; font-weight: bold; color: #06b6d4; margin-bottom: 20px; }
+#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+#gameover { font-size: 40px; font-weight: bold; color: #06b6d4; margin-bottom: 20px; }
 
 #skin-shop { display: flex; gap: 10px; margin-bottom: 20px; }
 .skin-item { font-size: 30px; padding: 10px; cursor: pointer; border-radius: 12px; border: 2px solid transparent; background: rgba(255,255,255,0.1); transition: 0.2s; }
 .skin-item.active { border-color: #06b6d4; background: rgba(6, 182, 212, 0.3); transform: scale(1.1); }
 
-input { padding: 15px; border-radius: 10px; border: none; text-align: center; width: 220px; font-size: 18px; margin-bottom: 10px; }
-#start-btn { padding: 15px; width: 220px; font-size: 20px; font-weight: bold; border-radius: 10px; border: none; color: white; background: #06b6d4; cursor: pointer; }
-
-#leaderboard { width: 260px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; color: white; text-align: center; margin-top: 15px; }
-.score-row { display: flex; justify-content: space-between; margin: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+input { padding: 15px; border-radius: 10px; border: none; text-align: center; width: 240px; font-size: 18px; margin-bottom: 10px; outline: none; }
+#start-btn { padding: 15px; width: 240px; font-size: 20px; font-weight: bold; border-radius: 
