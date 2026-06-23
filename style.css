@@ -1,26 +1,20 @@
-/* overlay & panels fixes */
-#overlay, .panel {
-  pointer-events: auto;    /* מאפשר קליקים בתוכם */
-  z-index: 9999;           /* גבוה כדי להיות מעל הקנבס */
+:root{
+  --bg:#0b1220;
+  --card:#111827;
+  --accent:#2dd4bf;
+  --text:#e6eef6;
 }
-
-/* כפתורים יהיו תמיד קליקים */
-#overlay button,
-.panel button,
-#controls button,
-#shareButtons button,
-.goButtons button,
-#goButtons button {
-  pointer-events: auto;
-  position: relative;
-  z-index: 10000;
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:0}
+html,body{height:100%;background:linear-gradient(180deg,var(--bg),#061022);color:var(--text);direction:rtl}
+#ui{width:820px;margin:8px auto;max-width:96%}
+#topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+#score,#hud{background:rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px}
+#gameCanvas{display:block;margin:0 auto;border-radius:8px;background:#87CEEB;box-shadow:0 8px 24px rgba(2,6,23,0.6);max-width:100%;height:auto;position:relative;z-index:1}
+.panel{position:fixed;left:50%;top:80px;transform:translateX(-50%);min-width:260px;background:rgba(10,12,18,0.95);padding:12px;border-radius:8px;z-index:999}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:1000}
+#gameOverCard{background:var(--card);padding:18px;border-radius:10px;text-align:center;width:320px;color:var(--text)}
+button{background:var(--card);border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:8px 10px;border-radius:6px;cursor:pointer}
+@media (max-width:640px){
+  #ui{width:calc(100% - 16px);padding:8px}
+  .panel{left:8px;transform:none;width:calc(100% - 16px)}
 }
-
-/* ודא שהקנבס לא יבלוט מעל ה‑UI */
-#gameCanvas {
-  position: relative;
-  z-index: 1;
-}
-
-/* ה־UI ו‑overlay מעל הקנבס */
-#ui { position: relative; z-index: 10; }
