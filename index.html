@@ -12,6 +12,7 @@
   <div id="container">
     <div id="muteBtn">🔊</div>
 
+    <!-- מסך ראשי -->
     <div id="mainMenu" class="screen">
       <div class="menu-content">
         <h1>OneTap MEGA PRO</h1>
@@ -25,11 +26,12 @@
       </div>
     </div>
 
-    <div id="skinsMenu" class="screen" style="display:none;">
+    <!-- תפריט סקינים -->
+    <div id="skinsMenu" class="screen">
       <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
         <div id="skinsGrid">
-          <div class="skin-option active" id="skin-blue">🔵</div>
+          <div class="skin-option" id="skin-blue">🔵</div>
           <div class="skin-option" id="skin-fire">🔥</div>
           <div class="skin-option" id="skin-star">⭐</div>
           <div class="skin-option" id="skin-ufo">🛸</div>
@@ -40,7 +42,8 @@
       </div>
     </div>
 
-    <div id="shopMenu" class="screen" style="display:none;">
+    <!-- חנות -->
+    <div id="shopMenu" class="screen">
       <div class="menu-content">
         <h2>🛒 חנות</h2>
         <div class="coins-display">💰 מטבעות: <span id="shopCoins">0</span></div>
@@ -60,7 +63,8 @@
       </div>
     </div>
 
-    <div id="leaderboardMenu" class="screen" style="display:none;">
+    <!-- לוח תוצאות -->
+    <div id="leaderboardMenu" class="screen">
       <div class="menu-content">
         <h2>🏆 TOP 5</h2>
         <div id="scoresList">טוען...</div>
@@ -68,14 +72,14 @@
       </div>
     </div>
 
-    <div id="gameScreen" class="screen" style="display:none; background: transparent;">
+    <!-- מסך משחק -->
+    <div id="gameScreen" class="screen">
       <div class="game-header">
         <div class="score-box">LEVEL: <span id="levelText">1</span></div>
         <div class="score-box">SCORE: <span id="score">0</span></div>
         <div class="score-box coins-inline">💰 <span id="coinsDisplay">0</span></div>
       </div>
       
-      <!-- תצוגת יכולות פעילות -->
       <div id="active-powers">
         <span id="shield-count">🛡️ x0</span>
         <span id="slow-count">⏱️ x0</span>
