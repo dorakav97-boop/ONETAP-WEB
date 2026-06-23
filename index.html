@@ -1,20 +1,61 @@
-<div id="shareButtons">
-  <button id="shareWhatsapp">שתף ב‑WhatsApp</button>
-  <button id="shareTelegram">שתף בטלגרם</button>
-</div>
-
-<div id="panels">
-  <div class="panel" id="panelSkins" hidden>
-    <h3>בחר סקין</h3>
-    <div id="skinsList"></div>
-    <button class="closePanel">סגור</button>
-  </div>
-
-  <div class="panel" id="panelShop" hidden>
-    <h3>חנות</h3>
-    <div id="shopList">
-      <div class="shopItem">מגן קבוע (חנות דמו) - 50 מטבעות</div>
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OneTap Web — משחק</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="ui">
+    <div id="topbar">
+      <div id="score">ניקוד: 0</div>
+      <div id="hud">
+        <div id="coins">מטבעות: 0</div>
+        <div id="shieldStatus">מגן: אין</div>
+      </div>
+      <div id="controls">
+        <button id="btnSkins">בחירת סקין</button>
+        <button id="btnShop">חנות</button>
+        <button id="btnMute">השה/קול</button>
+      </div>
     </div>
-    <button class="closePanel">סגור</button>
+
+    <div id="shareButtons">
+      <button id="shareWhatsapp">שתף ב‑WhatsApp</button>
+      <button id="shareTelegram">שתף בטלגרם</button>
+    </div>
+
+    <div id="panels">
+      <div class="panel" id="panelSkins" hidden>
+        <h3>בחר סקין</h3>
+        <div id="skinsList"></div>
+        <button class="closePanel">סגור</button>
+      </div>
+
+      <div class="panel" id="panelShop" hidden>
+        <h3>חנות</h3>
+        <div id="shopList">
+          <div class="shopItem">מגן קבוע (חנות דמו) - 50 מטבעות</div>
+        </div>
+        <button class="closePanel">סגור</button>
+      </div>
+    </div>
   </div>
-</div>
+
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+  <div id="overlay" hidden>
+    <div id="gameOverCard">
+      <h2 id="goTitle">Game Over</h2>
+      <p id="finalScore">ניקוד: 0</p>
+      <div id="goButtons">
+        <button id="btnRetry">שחק שוב</button>
+        <button id="btnShareAfter">שתף תוצאה</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
