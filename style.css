@@ -1,20 +1,25 @@
-body, html { margin: 0; padding: 0; overflow: hidden; background-color: #0b1220 !important; height: 100%; width: 100%; font-family: 'system-ui', sans-serif; }
-#game { display: block; }
-#ui { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-#score { font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #06b6d4; margin: 0; }
+body, html { 
+  margin: 0; 
+  padding: 0; 
+  overflow: hidden; 
+  background-color: #0b1220 !important; /* כחול לילה עמוק */
+  height: 100%; 
+  width: 100%; 
+  font-family: sans-serif; 
+}
+#game { display: block; background-color: #0b1220; }
+#ui { position: absolute; top: 20px; left: 20px; color: white; z-index: 10; pointer-events: none; }
+#score { font-size: 50px; font-weight: bold; }
 
-#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
-#gameover { font-size: 38px; font-weight: 900; color: #06b6d4; margin-bottom: 20px; text-shadow: 0 0 15px #06b6d4; }
+#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+#gameover { font-size: 35px; font-weight: bold; color: #06b6d4; margin-bottom: 20px; }
 
-#skin-shop { display: flex; gap: 10px; margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 20px; }
-.skin-item { font-size: 28px; padding: 10px; cursor: pointer; border-radius: 15px; border: 2px solid transparent; background: rgba(0,0,0,0.3); transition: 0.2s; border: none; }
-.skin-item.active { border: 2px solid #06b6d4 !important; background: rgba(6, 182, 212, 0.2); transform: scale(1.1); }
+#skin-shop { display: flex; gap: 10px; margin-bottom: 20px; }
+.skin-item { font-size: 30px; padding: 10px; cursor: pointer; border-radius: 12px; border: 2px solid transparent; background: rgba(255,255,255,0.1); transition: 0.2s; }
+.skin-item.active { border-color: #06b6d4; background: rgba(6, 182, 212, 0.3); transform: scale(1.1); }
 
-input { padding: 15px; border-radius: 12px; border: none; text-align: center; width: 240px; font-size: 18px; margin-bottom: 10px; outline: none; }
-#start-btn { padding: 18px; width: 240px; font-size: 20px; font-weight: 900; border-radius: 12px; border: none; color: white; background: linear-gradient(45deg, #06b6d4, #0891b2); cursor: pointer; }
+input { padding: 15px; border-radius: 10px; border: none; text-align: center; width: 220px; font-size: 18px; margin-bottom: 10px; }
+#start-btn { padding: 15px; width: 220px; font-size: 20px; font-weight: bold; border-radius: 10px; border: none; color: white; background: #06b6d4; cursor: pointer; }
 
-#leaderboard { width: 280px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; color: white; margin-top: 15px; font-size: 14px; }
-.score-row { display: flex; justify-content: space-between; margin: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 3px; }
-
-.poper { position: absolute; font-weight: 900; color: #fbbf24; font-size: 40px; pointer-events: none; animation: popUp 0.8s forwards; z-index: 200; }
-@keyframes popUp { 0% { opacity:0; transform: scale(0.5); } 100% { opacity:0; transform: translateY(-80px) scale(1.1); } }
+#leaderboard { width: 260px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; color: white; text-align: center; margin-top: 15px; }
+.score-row { display: flex; justify-content: space-between; margin: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
