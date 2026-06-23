@@ -1,5 +1,5 @@
 window.addEventListener('load', () => {
-    // --- אתחול והגדרות ---
+    // --- אתחול Firebase ---
     const firebaseConfig = {
         apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
         authDomain: "dor-akav-game.firebaseapp.com",
@@ -19,16 +19,20 @@ window.addEventListener('load', () => {
 
     // משתני משחק
     let running = false;
-    let score = 0, level = 1, coins = parseInt(localStorage.getItem('onetap_coins') || '0');
+    let score = 0, level = 1, coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
     let high = parseInt(localStorage.getItem('onetap_high') || '0');
     let gravity = 0.4, jump = -7;
-    let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, skin: '🔵' };
-    let pipes = [], items = [], particles = [], clouds = [];
+    let player = { x: 50, y: 0, r: 25, vy: 0, angle: 0, hasShield: false };
+    let pipes = [], items = [], particles = [];
     let currentSpeed = 3.5, spawnTimer = 0, lastTime = 0;
     let muted = false;
 
     const playerImg = new Image();
-    playerImg.src = 'me.png.JPG'; // תמונת ברירת המחדל שלך
+    playerImg.src = 'me.png.JPG'; 
+
+    // עדכון תצוגת מטבעות ראשונית
+    document.getElementById('coinsDisplay').textContent = coinsOwned;
+    document.getElementById('shopCoins').textContent = coinsOwned;
 
     // --- ניווט ---
     function showScreen(id) {
@@ -47,7 +51,10 @@ window.addEventListener('load', () => {
 
     bind('btnPlay', () => { showScreen('gameScreen'); start(); });
     bind('btnSkins', () => showScreen('skinsMenu'));
-    bind('btnShop', () => showScreen('shopMenu'));
+    bind('btnShop', () => {
+        document.getElementById('shopCoins').textContent = coinsOwned;
+        showScreen('shopMenu');
+    });
     bind('btnLeaderboard', () => { showScreen('leaderboardMenu'); loadLeaderboard(); });
     bind('backFromSkins', () => showScreen('mainMenu'));
     bind('backFromShop', () => showScreen('mainMenu'));
@@ -56,11 +63,29 @@ window.addEventListener('load', () => {
     bind('retry', () => start());
     bind('muteBtn', () => { muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; });
 
+    // --- מערכת חנות ---
+    document.querySelectorAll('.power-up-item').forEach(item => {
+        bind(item.id || 'shield-buy', () => {
+            const cost = parseInt(item.getAttribute('data-cost') || '100');
+            if (coinsOwned >= cost) {
+                coinsOwned -= cost;
+                localStorage.setItem('onetap_coins', coinsOwned);
+                document.getElementById('shopCoins').textContent = coinsOwned;
+                document.getElementById('coinsDisplay').textContent = coinsOwned;
+                player.hasShield = true;
+                alert("קנית מגן! הוא יופעל במשחק הבא");
+            } else {
+                alert("אין לך מספיק מטבעות!");
+            }
+        });
+    });
+
     // --- לוגיקת משחק ---
     function start() {
         running = true; score = 0; level = 1;
         pipes = []; items = []; particles = [];
         player.y = H / 2; player.vy = 0;
+        // המגן נשאר פעיל רק אם נקנה בחנות
         currentSpeed = 3.5; spawnTimer = 0;
         document.getElementById('overlay').style.display = 'none';
         lastTime = performance.now();
@@ -68,8 +93,11 @@ window.addEventListener('load', () => {
     }
 
     function spawnPipe() {
-        let gap = 150 - (level * 5);
-        let center = Math.random() * (H - gap - 100) + 50 + gap/2;
+        // קושי דינמי: הפתח גדל ככל שהמהירות עולה
+        let gap = 160 + (score * 0.5); 
+        if (gap > 250) gap = 250; // הגבלה לפתח מקסימלי
+
+        let center = Math.random() * (H - gap - 150) + 75 + gap/2;
         pipes.push({ x: W, topH: center - gap/2, botY: center + gap/2, passed: false });
         
         if (Math.random() > 0.7) {
@@ -82,42 +110,53 @@ window.addEventListener('load', () => {
         let dt = t - lastTime; lastTime = t;
         ctx.clearRect(0, 0, W, H);
 
-        // רקע
-        ctx.fillStyle = '#05080a'; ctx.fillRect(0,0,W,H);
+        // מהירות עולה עם הזמן
+        currentSpeed = 3.5 + (score * 0.1);
+        if (currentSpeed > 8) currentSpeed = 8; // הגבלת מהירות מקסימלית
 
         spawnTimer += dt;
         if (spawnTimer > 1500) { spawnTimer = 0; spawnPipe(); }
 
-        // פיזיקה ציפור
+        // פיזיקה
         player.vy += gravity; player.y += player.vy;
         player.angle = player.vy * 0.1;
 
-        // ציור שחקן
+        // ציור שחקן עם מגן אם קיים
         ctx.save();
         ctx.translate(player.x, player.y);
         ctx.rotate(player.angle);
+        if (player.hasShield) {
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.arc(0,0,player.r + 5,0,Math.PI*2); ctx.stroke();
+        }
         ctx.beginPath(); ctx.arc(0,0,player.r,0,Math.PI*2); ctx.clip();
         if (playerImg.complete) ctx.drawImage(playerImg, -player.r, -player.r, player.r*2, player.r*2);
-        else { ctx.fillStyle = '#06b6d4'; ctx.fill(); }
         ctx.restore();
 
         // צינורות
         for (let i = pipes.length - 1; i >= 0; i--) {
             let p = pipes[i]; p.x -= currentSpeed;
             ctx.fillStyle = '#8b5cf6';
-            ctx.fillRect(p.x, 0, 50, p.topH);
-            ctx.fillRect(p.x, p.botY, 50, H - p.botY);
+            ctx.fillRect(p.x, 0, 60, p.topH);
+            ctx.fillRect(p.x, p.botY, 60, H - p.botY);
 
             if (!p.passed && p.x < player.x) {
                 p.passed = true; score++;
                 document.getElementById('score').textContent = score;
-                if (score % 10 === 0) level++;
             }
 
-            if (player.x + player.r > p.x && player.x - player.r < p.x + 50) {
-                if (player.y - player.r < p.topH || player.y + player.r > p.botY) gameOver();
+            if (player.x + player.r > p.x && player.x - player.r < p.x + 60) {
+                if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
+                    if (player.hasShield) {
+                        player.hasShield = false;
+                        pipes.splice(i, 1); // המגן שובר את הצינור
+                    } else {
+                        gameOver();
+                    }
+                }
             }
-            if (p.x < -60) pipes.splice(i, 1);
+            if (p.x < -70) pipes.splice(i, 1);
         }
 
         // מטבעות
@@ -127,9 +166,11 @@ window.addEventListener('load', () => {
             ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
 
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coins += 5; // מטבע שווה 5
-                localStorage.setItem('onetap_coins', coins);
-                document.getElementById('coinsDisplay').textContent = coins;
+                score += 5; // מוסיף 5 לניקוד
+                coinsOwned += 3; // מוסיף 3 לחנות
+                localStorage.setItem('onetap_coins', coinsOwned);
+                document.getElementById('score').textContent = score;
+                document.getElementById('coinsDisplay').textContent = coinsOwned;
                 items.splice(i, 1);
             }
         }
@@ -140,6 +181,7 @@ window.addEventListener('load', () => {
 
     function gameOver() {
         running = false;
+        player.hasShield = false; // איבוד המגן בהפסד
         document.getElementById('overlay').style.display = 'flex';
         document.getElementById('gameover').textContent = "SCORE: " + score;
         if (score > high) {
@@ -155,7 +197,6 @@ window.addEventListener('load', () => {
         }
     });
 
-    // פונקציות Firebase
     async function loadLeaderboard() {
         const list = document.getElementById('scoresList');
         list.innerHTML = "טוען...";
