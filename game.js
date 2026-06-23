@@ -7,26 +7,21 @@ window.addEventListener('load', () => {
         messagingSenderId: "630792064093",
         appId: "1:630792064093:web:3a7c53b696e86899b8"
     };
-    
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let W, H;
-    
     function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
     let running = false, score = 0, level = 1, currentStage = 0;
     let coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
-    let high = parseInt(localStorage.getItem('onetap_high') || '0');
     let shields = 0, slows = 0, reviveCount = 0;
-    
     let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
     let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    
-    const BASE_SPEED = 2.4; // התחלה קצת יותר איטית
+    const BASE_SPEED = 2.4; 
     let currentSpeed = BASE_SPEED;
     let gravity = 0.32, jump = -6.2;
     
@@ -39,9 +34,7 @@ window.addEventListener('load', () => {
     ];
 
     const playerImg = new Image();
-    // טעינת סקין שמור או תמונה דיפולטיבית
-    const savedSkin = localStorage.getItem('onetap_custom_skin');
-    playerImg.src = savedSkin || 'me.png.JPG';
+    playerImg.src = localStorage.getItem('onetap_custom_skin') || 'me.png.JPG';
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -58,21 +51,20 @@ window.addEventListener('load', () => {
         }
     };
 
-    // --- חנות ---
     bind('buy-shield', () => {
         if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); }
-        else if (shields >= 3) alert("מקסימום מגנים!"); else alert("אין מטבעות!");
+        else alert("לא ניתן לקנות");
     });
 
     bind('buy-slow', () => {
         if (coinsOwned >= 150 && slows < 3) { coinsOwned -= 150; slows++; saveAndRefresh(); }
-        else if (slows >= 3) alert("מקסימום האטה!"); else alert("אין מטבעות!");
+        else alert("לא ניתן לקנות");
     });
 
     bind('btnRevive', () => {
         let cost = 300 + (reviveCount * 100);
         if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
-        else alert("אין מטבעות!");
+        else alert("אין מטבעות");
     });
 
     function saveAndRefresh() {
@@ -80,28 +72,18 @@ window.addEventListener('load', () => {
         document.getElementById('shopCoins').textContent = coinsOwned;
         document.getElementById('coinsDisplay').textContent = coinsOwned;
         document.getElementById('score').textContent = score;
-        updatePowerDisplay();
-    }
-
-    function updatePowerDisplay() {
         document.getElementById('shield-count').textContent = `🛡️ x${shields}`;
         document.getElementById('slow-count').textContent = `⏱️ x${slows}`;
     }
 
-    // --- תיקון העלאת תמונה לאייפון ---
-    const imageUpload = document.getElementById('imageUpload');
-    imageUpload.addEventListener('change', function(e) {
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    playerImg.src = ev.target.result;
-                    localStorage.setItem('onetap_custom_skin', ev.target.result);
-                    alert("הסקין עודכן בהצלחה!");
-                };
-                img.src = ev.target.result;
+                playerImg.src = ev.target.result;
+                localStorage.setItem('onetap_custom_skin', ev.target.result);
+                alert("הסקין הועלה!");
             };
             reader.readAsDataURL(file);
         }
@@ -117,8 +99,6 @@ window.addEventListener('load', () => {
             const dataUrl = tempCanvas.toDataURL();
             playerImg.src = dataUrl;
             localStorage.setItem('onetap_custom_skin', dataUrl);
-            document.querySelectorAll('.skin-option').forEach(s => s.classList.remove('active'));
-            opt.classList.add('active');
         });
     });
 
@@ -140,11 +120,7 @@ window.addEventListener('load', () => {
         requestAnimationFrame(loop);
     }
 
-    function revivePlayer() {
-        running = true; pipes = []; player.y = H / 2; player.vy = 0;
-        document.getElementById('overlay').style.display = 'none';
-        requestAnimationFrame(loop);
-    }
+    function revivePlayer() { running = true; pipes = []; player.y = H / 2; player.vy = 0; document.getElementById('overlay').style.display = 'none'; requestAnimationFrame(loop); }
 
     function loop(t) {
         if (!running) return;
@@ -173,15 +149,14 @@ window.addEventListener('load', () => {
             ctx.fillRect(p.x, 0, 85, p.topH); ctx.fillRect(p.x, p.botY, 85, H - p.botY);
 
             if (!p.passed && p.x < player.x) {
-                p.passed = true; score++; 
-                currentSpeed += 0.03; // מהירות עולה במעט בכל מכשול
-                if (score % 10 === 0) levelUp();
+                p.passed = true; score++; currentSpeed += 0.03; 
+                if (score % 10 === 0) { level++; currentStage = Math.min(Math.floor((level - 1) / 2), stageConfigs.length - 1); document.getElementById('levelText').textContent = level; }
                 document.getElementById('score').textContent = score;
             }
 
             if (player.x + player.r > p.x && player.x - player.r < p.x + 85) {
                 if (player.y - player.r < p.topH || player.y + player.r > p.botY) {
-                    if (shields > 0) { shields--; updatePowerDisplay(); pipes.splice(i, 1); }
+                    if (shields > 0) { shields--; saveAndRefresh(); pipes.splice(i, 1); }
                     else gameOver();
                 }
             }
@@ -192,19 +167,11 @@ window.addEventListener('load', () => {
             let it = items[i]; it.x -= effectiveSpeed;
             ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
-                coinsOwned += 3; 
-                score += 5; // כל מטבע מוסיף 5 נקודות
-                currentSpeed += 0.06; // מטבע מעלה קצב כמו 2 מכשולים (0.03 * 2)
-                saveAndRefresh(); items.splice(i, 1);
+                coinsOwned += 3; score += 5; currentSpeed += 0.06; saveAndRefresh(); items.splice(i, 1);
             }
         }
         if (player.y > H || player.y < 0) gameOver();
         requestAnimationFrame(loop);
-    }
-
-    function levelUp() {
-        level++; currentStage = Math.min(Math.floor((level - 1) / 2), stageConfigs.length - 1);
-        document.getElementById('levelText').textContent = level;
     }
 
     function spawnPipe() {
@@ -215,19 +182,13 @@ window.addEventListener('load', () => {
     }
 
     function gameOver() {
-        running = false;
-        document.getElementById('overlay').style.display = 'flex';
+        running = false; document.getElementById('overlay').style.display = 'flex';
         document.getElementById('gameover').textContent = "SCORE: " + score;
-        let cost = 300 + (reviveCount * 100);
-        document.getElementById('reviveCost').textContent = cost;
+        document.getElementById('reviveCost').textContent = 300 + (reviveCount * 100);
         saveScore(score);
     }
 
-    window.addEventListener('touchstart', (e) => {
-        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
-            player.vy = jump;
-        }
-    }, {passive: false});
+    window.addEventListener('touchstart', (e) => { if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') player.vy = jump; }, {passive: false});
 
     async function saveScore(s) {
         const name = document.getElementById('playerName').value || "שחקן";
@@ -235,11 +196,9 @@ window.addEventListener('load', () => {
     }
 
     async function loadLeaderboard() {
-        const list = document.getElementById('scoresList');
-        list.innerHTML = "טוען...";
+        const list = document.getElementById('scoresList'); list.innerHTML = "טוען...";
         const snap = await db.collection('scores').orderBy('score', 'desc').limit(5).get();
-        let h = "";
-        snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
+        let h = ""; snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
         list.innerHTML = h || "אין תוצאות";
     }
 });
