@@ -1,53 +1,10 @@
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-html,body { height:100%; width:100%; font-family: 'Arial Black', sans-serif; background:#05080a; color:white; direction:rtl; overflow: hidden; }
-#container { position:relative; height:100vh; width:100vw; }
-
-.screen { 
-  position:absolute; inset:0; display:none; flex-direction: column;
-  align-items:center; justify-content:center; z-index: 100; 
-  background: rgba(5, 8, 10, 0.95); backdrop-filter: blur(10px);
+/* ... אותן הגדרות קודמות ... */
+#active-powers {
+    position: absolute; top: 80px; left: 20px; display: flex; flex-direction: column; gap: 5px;
+    z-index: 50; font-size: 18px; font-weight: bold; color: #fff; text-shadow: 0 0 5px #000;
 }
 
-.btn-main, .btn-back {
-  padding:18px; border-radius:15px; font-size:18px; border:none; cursor:pointer; font-weight:900;
-  width: 100%; text-align: center; color: white; touch-action: manipulation; margin-top: 10px;
-}
-.btn-main { background: linear-gradient(45deg,#06b6d4,#0891b2); box-shadow: 0 4px 15px rgba(6,182,212,0.3); }
-.btn-back { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); }
+#revive-section { width: 100%; display: flex; justify-content: center; margin-bottom: 10px; }
 
-.game-header { 
-    position: absolute; top: 15px; width: 100%; display: flex; 
-    justify-content: space-around; z-index: 50; pointer-events: none; 
-}
-.score-box { 
-    background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 12px; 
-    font-size: 22px; font-weight: 900; border: 2px solid #06b6d4; color: #fff;
-}
-
-#game { display:block; width:100%; height:100vh; z-index: 1; }
-
-/* סקינים */
-#skinsGrid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; margin: 20px 0; }
-.skin-option { 
-    background: rgba(255,255,255,0.05); padding: 10px; border-radius: 50%; 
-    border: 2px solid transparent; cursor: pointer; text-align: center; font-size: 25px;
-    width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-}
-.skin-option.active { border-color: #06b6d4; background: rgba(6,182,212,0.2); }
-
-#overlay { 
-    position: absolute; inset:0; background:rgba(0,0,0,0.9); 
-    display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200; 
-}
-
-.level-banner {
-    position: absolute; top: 30%; width: 100%; text-align: center;
-    font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #06b6d4;
-    animation: levelUpAnim 2s forwards; z-index: 100; pointer-events: none;
-}
-@keyframes levelUpAnim {
-    0% { opacity: 0; transform: scale(0.5); }
-    20% { opacity: 1; transform: scale(1.2); }
-    80% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: translateY(-100px); }
-}
+/* הגדלת הסקין ב-CSS לא משפיעה על הקנבס, נשנה את זה ב-JS, אבל נוודא שהתפריט יפה */
+.skin-option { font-size: 35px; width: 70px; height: 70px; }
