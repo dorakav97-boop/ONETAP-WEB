@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <!-- תפריט סקינים -->
+    <!-- סקינים -->
     <div id="skinsMenu" class="screen">
       <div class="menu-content">
         <h2>🎨 בחר סקין</h2>
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <!-- תפריט חנות -->
+    <!-- חנות -->
     <div id="shopMenu" class="screen">
       <div class="menu-content">
         <h2>🛒 חנות</h2>
@@ -56,7 +56,7 @@
       </div>
     </div>
 
-    <!-- תפריט לוח תוצאות -->
+    <!-- לוח תוצאות -->
     <div id="leaderboardMenu" class="screen">
       <div class="menu-content">
         <h2>🏆 TOP 5</h2>
@@ -72,21 +72,22 @@
         <div class="box" id="scrBox">Score: 0</div>
         <div class="box" style="color:#fbbf24">💰 <span id="coinsDisplay">0</span></div>
       </div>
-      <div id="active-p">
-        <span id="shield-count">🛡️ x0</span>
-        <span id="slow-count">⏱️ x0</span>
+
+      <!-- כפתורי הפעלת כוחות בזמן אמת -->
+      <div id="power-controls">
+        <div id="use-shield" class="power-btn">🛡️ <span id="s-inv">0</span></div>
+        <div id="use-slow" class="power-btn">⏱️ <span id="w-inv">0</span></div>
       </div>
+
       <canvas id="game"></canvas>
+
       <div id="overlay">
         <h2 id="go-text">GAME OVER</h2>
         <button id="btnRevive" class="btn" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
-        
-        <!-- כפתורי שיתוף -->
         <div class="share-container">
             <button id="shareWA" class="btn-share" style="background:#25D366;">WhatsApp 📱</button>
             <button id="shareTG" class="btn-share" style="background:#0088cc;">Telegram ✈️</button>
         </div>
-
         <input type="text" id="playerName" placeholder="שם שחקן">
         <button id="retry" class="btn">שחק שוב</button>
         <button id="homeBtn" class="btn-back">תפריט ראשי</button>
