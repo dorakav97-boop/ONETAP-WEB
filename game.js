@@ -1,4 +1,5 @@
 window.addEventListener('load', () => {
+    // --- Firebase אתחול ---
     const firebaseConfig = {
         apiKey: "AIzaSyBW-oSotemXbf3rpbHwAp-jFUVB0",
         authDomain: "dor-akav-game.firebaseapp.com",
@@ -16,14 +17,13 @@ window.addEventListener('load', () => {
     function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
+    // משתני משחק
     let running = false, score = 0, level = 1, currentStage = 0;
     let coinsOwned = parseInt(localStorage.getItem('onetap_coins') || '0');
     let shields = 0, slows = 0, reviveCount = 0;
     let player = { x: 80, y: 0, r: 30, vy: 0, angle: 0 }; 
     let pipes = [], items = [], spawnTimer = 0, lastTime = 0;
-    const BASE_SPEED = 2.4; 
-    let currentSpeed = BASE_SPEED;
-    let gravity = 0.32, jump = -6.2;
+    let currentSpeed = 2.4, gravity = 0.32, jump = -6.2;
     
     const stageConfigs = [
         { bg: "#05080a", pipe: "#06b6d4" },
@@ -36,6 +36,7 @@ window.addEventListener('load', () => {
     const playerImg = new Image();
     playerImg.src = localStorage.getItem('onetap_custom_skin') || 'me.png.JPG';
 
+    // פונקציית מעבר מסכים חזקה
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById('overlay').style.display = 'none';
@@ -43,48 +44,51 @@ window.addEventListener('load', () => {
         if (target) target.classList.add('active-screen');
     }
 
+    // מאזין לחיצות שעובד תמיד באייפון
     const bind = (id, fn) => {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('click', (e) => { e.preventDefault(); fn(); }, {passive: false});
             el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive: false});
+            el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
         }
     };
 
+    // חיבור כפתורים
+    bind('btnPlay', () => { showScreen('gameScreen'); start(); });
+    bind('btnSkins', () => showScreen('skinsMenu'));
+    bind('btnShop', () => { saveAndRefresh(); showScreen('shopMenu'); });
+    bind('btnLeaderboard', () => { showScreen('leaderboardMenu'); loadLeaderboard(); });
+    bind('backFromSkins', () => showScreen('mainMenu'));
+    bind('backFromShop', () => showScreen('mainMenu'));
+    bind('backFromLeaderboard', () => showScreen('mainMenu'));
+    bind('homeBtn', () => { running = false; showScreen('mainMenu'); });
+    bind('retry', () => { reviveCount = 0; start(); });
+    
     bind('buy-shield', () => {
         if (coinsOwned >= 75 && shields < 3) { coinsOwned -= 75; shields++; saveAndRefresh(); }
-        else alert("לא ניתן לקנות");
     });
-
     bind('buy-slow', () => {
         if (coinsOwned >= 150 && slows < 3) { coinsOwned -= 150; slows++; saveAndRefresh(); }
-        else alert("לא ניתן לקנות");
     });
-
     bind('btnRevive', () => {
         let cost = 300 + (reviveCount * 100);
         if (coinsOwned >= cost) { coinsOwned -= cost; reviveCount++; saveAndRefresh(); revivePlayer(); }
-        else alert("אין מטבעות");
     });
 
     function saveAndRefresh() {
         localStorage.setItem('onetap_coins', coinsOwned);
         document.getElementById('shopCoins').textContent = coinsOwned;
         document.getElementById('coinsDisplay').textContent = coinsOwned;
-        document.getElementById('score').textContent = score;
         document.getElementById('shield-count').textContent = `🛡️ x${shields}`;
         document.getElementById('slow-count').textContent = `⏱️ x${slows}`;
     }
 
+    // סקינים
     document.getElementById('imageUpload').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                playerImg.src = ev.target.result;
-                localStorage.setItem('onetap_custom_skin', ev.target.result);
-                alert("הסקין הועלה!");
-            };
+            reader.onload = (ev) => { playerImg.src = ev.target.result; localStorage.setItem('onetap_custom_skin', ev.target.result); };
             reader.readAsDataURL(file);
         }
     });
@@ -96,42 +100,34 @@ window.addEventListener('load', () => {
             const tCtx = tempCanvas.getContext('2d');
             tCtx.font = '50px serif'; tCtx.textAlign = 'center'; tCtx.textBaseline = 'middle';
             tCtx.fillText(opt.innerText, 35, 35);
-            const dataUrl = tempCanvas.toDataURL();
-            playerImg.src = dataUrl;
-            localStorage.setItem('onetap_custom_skin', dataUrl);
+            playerImg.src = tempCanvas.toDataURL();
+            localStorage.setItem('onetap_custom_skin', playerImg.src);
         });
     });
 
-    bind('btnPlay', () => { showScreen('gameScreen'); start(); });
-    bind('btnSkins', () => showScreen('skinsMenu'));
-    bind('btnShop', () => { saveAndRefresh(); showScreen('shopMenu'); });
-    bind('btnLeaderboard', () => { showScreen('leaderboardMenu'); loadLeaderboard(); });
-    bind('backFromSkins', () => showScreen('mainMenu'));
-    bind('backFromShop', () => showScreen('mainMenu'));
-    bind('backFromLeaderboard', () => showScreen('mainMenu'));
-    bind('retry', () => { reviveCount = 0; start(); });
-    bind('homeBtn', () => { running = false; showScreen('mainMenu'); });
-
     function start() {
-        running = true; score = 0; level = 1; currentStage = 0;
+        running = true; score = 0; level = 1; currentStage = 0; currentSpeed = 2.4;
         pipes = []; items = []; player.y = H / 2; player.vy = 0;
-        currentSpeed = BASE_SPEED; spawnTimer = 2000;
-        saveAndRefresh();
+        spawnTimer = 2000; saveAndRefresh();
         requestAnimationFrame(loop);
     }
 
-    function revivePlayer() { running = true; pipes = []; player.y = H / 2; player.vy = 0; document.getElementById('overlay').style.display = 'none'; requestAnimationFrame(loop); }
+    function revivePlayer() { 
+        running = true; pipes = []; player.y = H / 2; player.vy = 0; 
+        document.getElementById('overlay').style.display = 'none'; 
+        requestAnimationFrame(loop); 
+    }
 
     function loop(t) {
         if (!running) return;
         let dt = t - lastTime; if (dt > 100) dt = 16; lastTime = t;
-        let effectiveSpeed = (slows > 0) ? currentSpeed * 0.72 : currentSpeed;
+        let effSpeed = (slows > 0) ? currentSpeed * 0.72 : currentSpeed;
 
         ctx.fillStyle = stageConfigs[currentStage].bg;
         ctx.fillRect(0, 0, W, H);
 
         spawnTimer += dt;
-        if (spawnTimer > (2800 / (effectiveSpeed/2))) { spawnTimer = 0; spawnPipe(); }
+        if (spawnTimer > (2800 / (effSpeed/2))) { spawnTimer = 0; spawnPipe(); }
 
         player.vy += gravity; player.y += player.vy;
         player.angle = player.vy * 0.08;
@@ -144,7 +140,7 @@ window.addEventListener('load', () => {
         ctx.restore();
 
         for (let i = pipes.length - 1; i >= 0; i--) {
-            let p = pipes[i]; p.x -= effectiveSpeed;
+            let p = pipes[i]; p.x -= effSpeed;
             ctx.fillStyle = stageConfigs[currentStage].pipe;
             ctx.fillRect(p.x, 0, 85, p.topH); ctx.fillRect(p.x, p.botY, 85, H - p.botY);
 
@@ -164,7 +160,7 @@ window.addEventListener('load', () => {
         }
 
         for (let i = items.length - 1; i >= 0; i--) {
-            let it = items[i]; it.x -= effectiveSpeed;
+            let it = items[i]; it.x -= effSpeed;
             ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill();
             if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
                 coinsOwned += 3; score += 5; currentSpeed += 0.06; saveAndRefresh(); items.splice(i, 1);
@@ -182,13 +178,17 @@ window.addEventListener('load', () => {
     }
 
     function gameOver() {
-        running = false; document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('gameover').textContent = "SCORE: " + score;
+        running = false;
+        document.getElementById('overlay').style.display = 'flex';
         document.getElementById('reviveCost').textContent = 300 + (reviveCount * 100);
         saveScore(score);
     }
 
-    window.addEventListener('touchstart', (e) => { if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') player.vy = jump; }, {passive: false});
+    window.addEventListener('touchstart', (e) => {
+        if (running && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+            player.vy = jump;
+        }
+    }, {passive: false});
 
     async function saveScore(s) {
         const name = document.getElementById('playerName').value || "שחקן";
@@ -201,3 +201,4 @@ window.addEventListener('load', () => {
         let h = ""; snap.forEach(doc => h += `<p>${doc.data().name}: ${doc.data().score}</p>`);
         list.innerHTML = h || "אין תוצאות";
     }
+});
