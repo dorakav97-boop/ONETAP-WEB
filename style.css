@@ -1,20 +1,37 @@
-:root{
-  --bg:#0b1220;
-  --card:#111827;
-  --accent:#2dd4bf;
-  --text:#e6eef6;
-}
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:0}
-html,body{height:100%;background:linear-gradient(180deg,var(--bg),#061022);color:var(--text);direction:rtl}
-#ui{width:820px;margin:8px auto;max-width:96%}
-#topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-#score,#hud{background:rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px}
-#gameCanvas{display:block;margin:0 auto;border-radius:8px;background:#87CEEB;box-shadow:0 8px 24px rgba(2,6,23,0.6);max-width:100%;height:auto;position:relative;z-index:1}
-.panel{position:fixed;left:50%;top:80px;transform:translateX(-50%);min-width:260px;background:rgba(10,12,18,0.95);padding:12px;border-radius:8px;z-index:999}
-#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:1000}
-#gameOverCard{background:var(--card);padding:18px;border-radius:10px;text-align:center;width:320px;color:var(--text)}
-button{background:var(--card);border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:8px 10px;border-radius:6px;cursor:pointer}
-@media (max-width:640px){
-  #ui{width:calc(100% - 16px);padding:8px}
-  .panel{left:8px;transform:none;width:calc(100% - 16px)}
-}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+html, body { height: 100%; width: 100%; background-color: #05080a !important; color: white; direction: rtl; overflow: hidden; position: fixed; font-family: sans-serif; }
+#container { position: relative; width: 100%; height: 100%; background: #05080a; }
+
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; background: #05080a; }
+.active-screen { display: flex !important; }
+.menu-content { text-align: center; width: 85%; max-width: 400px; }
+
+.glow-text { font-size: 45px; color: #06b6d4; text-shadow: 0 0 20px #06b6d4; margin-bottom: 20px; }
+.btn, .btn-back { padding: 18px; border-radius: 15px; font-size: 20px; border: none; cursor: pointer; font-weight: bold; width: 100%; color: white; margin-top: 15px; display: block; background: linear-gradient(45deg,#06b6d4,#0891b2); }
+.btn-back { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+
+.hud { position: absolute; top: 15px; width: 100%; display: flex; justify-content: space-around; z-index: 1500; pointer-events: none; }
+.box { background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 10px; border: 1px solid #06b6d4; font-weight: bold; font-size: 18px; }
+
+/* כפתורי כוחות בזמן משחק */
+#power-controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; z-index: 1500; pointer-events: none; }
+.power-btn { width: 70px; height: 70px; background: rgba(0,0,0,0.6); border: 2px solid #06b6d4; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 25px; color: white; pointer-events: auto; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+.power-btn span { font-size: 14px; font-weight: bold; }
+.power-btn:active { transform: scale(0.9); background: rgba(6, 182, 212, 0.4); }
+
+#muteBtn { position: fixed; top: 20px; right: 20px; z-index: 5000; font-size: 24px; background: rgba(0,0,0,0.5); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+#game { display: block; width: 100%; height: 100%; background: #000; z-index: 1; }
+
+#skinsGrid, #powerUpsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; width: 100%; }
+.skin-option, .power-item { background: rgba(255,255,255,0.1); border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; border: 2px solid transparent; }
+.power-item { grid-column: span 2; flex-direction: column; font-size: 16px; height: 90px; }
+
+#overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+#overlay input { padding: 15px; border-radius: 10px; border: none; width: 80%; margin: 10px 0; font-size: 18px; text-align: center; color: black; background: white; }
+
+.share-container { display: flex; flex-direction: column; gap: 8px; width: 85%; margin: 10px 0; }
+.btn-share { width: 100%; padding: 15px; border-radius: 12px; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
+
+.lvl-up-anim { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 60px; font-weight: 900; color: #fff; text-shadow: 0 0 30px #06b6d4; z-index: 3000; animation: lvlUp 2s forwards; pointer-events: none; }
+@keyframes lvlUp { 0% { opacity: 0; transform: scale(0.5); } 20% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
