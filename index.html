@@ -12,68 +12,68 @@
   <div id="container">
     <div id="muteBtn">🔊</div>
 
-    <!-- מסך תפריט ראשי -->
-    <div id="mainMenu" class="screen active-screen">
-      <div class="menu-content">
-        <h1 class="glow-text">OneTap MEGA</h1>
-        <div class="menu-buttons">
-          <button id="btnPlay" class="btn">🎮 התחל משחק</button>
-          <button id="btnSkins" class="btn">🎨 סקינים</button>
-          <button id="btnShop" class="btn">🛒 חנות</button>
-          <button id="btnLeaderboard" class="btn">🏆 לוח תוצאות</button>
+    <!-- שכבת התפריטים -->
+    <div id="ui-layer">
+        <!-- תפריט ראשי -->
+        <div id="mainMenu" class="screen active">
+          <div class="menu-content">
+            <h1 class="glow-text">OneTap MEGA</h1>
+            <button id="btnPlay" class="btn">🎮 התחל משחק</button>
+            <button id="btnSkins" class="btn">🎨 סקינים</button>
+            <button id="btnShop" class="btn">🛒 חנות</button>
+            <button id="btnLeaderboard" class="btn">🏆 לוח תוצאות</button>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- מסך סקינים -->
-    <div id="skinsMenu" class="screen">
-      <div class="menu-content">
-        <h2>🎨 בחר סקין</h2>
-        <div id="skinsGrid">
-          <div class="skin-option" id="skin-blue">🔵</div>
-          <div class="skin-option" id="skin-fire">🔥</div>
-          <div class="skin-option" id="skin-star">⭐</div>
-          <div class="skin-option" id="skin-ufo">🛸</div>
+        <!-- סקינים -->
+        <div id="skinsMenu" class="screen">
+          <div class="menu-content">
+            <h2>🎨 בחר סקין</h2>
+            <div id="skinsGrid">
+              <div class="skin-option" id="skin-blue">🔵</div>
+              <div class="skin-option" id="skin-fire">🔥</div>
+              <div class="skin-option" id="skin-star">⭐</div>
+              <div class="skin-option" id="skin-ufo">🛸</div>
+            </div>
+            <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block;">
+              📷 העלה תמונה
+              <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+            </label>
+            <button id="backFromSkins" class="btn-back">← חזרה</button>
+          </div>
         </div>
-        <label for="imageUpload" class="btn" style="background:#8b5cf6; display:block; height:60px; line-height:30px;">
-          📷 העלה תמונה מהגלריה
-          <input type="file" id="imageUpload" accept="image/*" style="display:none;">
-        </label>
-        <button id="backFromSkins" class="btn-back">← חזרה</button>
-      </div>
-    </div>
 
-    <!-- מסך חנות -->
-    <div id="shopMenu" class="screen">
-      <div class="menu-content">
-        <h2>🛒 חנות</h2>
-        <p>💰 מטבעות: <span id="shopCoins">0</span></p>
-        <div id="powerUpsGrid">
-          <div class="power-item" id="buy-shield">🛡️<br>מגן (75💰)</div>
-          <div class="power-item" id="buy-slow">⏱️<br>האטה (150💰)</div>
+        <!-- חנות -->
+        <div id="shopMenu" class="screen">
+          <div class="menu-content">
+            <h2>🛒 חנות</h2>
+            <p>💰 מטבעות: <span id="shopCoins">0</span></p>
+            <div id="powerUpsGrid">
+              <div class="power-item" id="buy-shield">🛡️<br>מגן (75💰)</div>
+              <div class="power-item" id="buy-slow">⏱️<br>האטה (150💰)</div>
+            </div>
+            <button id="backFromShop" class="btn-back">← חזרה</button>
+          </div>
         </div>
-        <button id="backFromShop" class="btn-back">← חזרה</button>
-      </div>
+
+        <!-- לוח תוצאות -->
+        <div id="leaderboardMenu" class="screen">
+          <div class="menu-content">
+            <h2>🏆 TOP 5</h2>
+            <div id="scoresList"></div>
+            <button id="backFromLeaderboard" class="btn-back">← חזרה</button>
+          </div>
+        </div>
     </div>
 
-    <!-- מסך לוח תוצאות -->
-    <div id="leaderboardMenu" class="screen">
-      <div class="menu-content">
-        <h2>🏆 TOP 5</h2>
-        <div id="scoresList" style="margin:20px 0; font-size: 20px;"></div>
-        <button id="backFromLeaderboard" class="btn-back">← חזרה</button>
-      </div>
-    </div>
-
-    <!-- מסך משחק -->
-    <div id="gameScreen" class="screen">
+    <!-- שכבת המשחק -->
+    <div id="game-layer" style="display:none;">
       <div class="hud">
         <div class="box" id="lvlBox">Lvl: 1</div>
         <div class="box" id="scrBox">Score: 0</div>
         <div class="box" style="color:#fbbf24">💰 <span id="coinsDisplay">0</span></div>
       </div>
-
-      <!-- כפתורי הפעלה ידנית של כוחות -->
+      
       <div id="power-controls">
         <div id="use-shield" class="power-btn">🛡️ <span id="s-inv">0</span></div>
         <div id="use-slow" class="power-btn">⏱️ <span id="w-inv">0</span></div>
@@ -82,15 +82,12 @@
       <canvas id="game"></canvas>
 
       <div id="overlay">
-        <h2 id="go-text">GAME OVER</h2>
+        <h2>GAME OVER</h2>
         <button id="btnRevive" class="btn" style="background:#10b981;">❤️ החייאה (<span id="reviveCost">300</span>💰)</button>
-        
-        <!-- כפתורי שיתוף -->
         <div class="share-container">
             <button id="shareWA" class="btn-share" style="background:#25D366;">WhatsApp 📱</button>
             <button id="shareTG" class="btn-share" style="background:#0088cc;">Telegram ✈️</button>
         </div>
-
         <input type="text" id="playerName" placeholder="שם שחקן">
         <button id="retry" class="btn">שחק שוב</button>
         <button id="homeBtn" class="btn-back">תפריט ראשי</button>
